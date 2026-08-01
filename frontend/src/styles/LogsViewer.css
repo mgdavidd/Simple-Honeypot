@@ -1,0 +1,194 @@
+.logs-modal {
+  background: var(--gray-dark);
+  border: 2px solid var(--cyan);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+}
+
+.logs-filters {
+  padding: 16px;
+  border-bottom: 1px solid var(--cyan);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search-input,
+.filter-select {
+  padding: 8px 12px;
+  background: var(--darker);
+  border: 1px solid var(--cyan);
+  border-radius: 4px;
+  color: var(--white);
+  font-size: 12px;
+}
+
+.search-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: var(--cyan-light);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.logs-container {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(0, 20, 30, 0.5), rgba(0, 10, 20, 0.5));
+}
+
+.no-logs {
+  text-align: center;
+  color: var(--gray-light);
+  padding: 40px 20px;
+}
+
+.logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.log-entry {
+  background: rgba(0, 20, 30, 0.4);
+  border-left: 4px solid var(--cyan);
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+}
+
+.log-success {
+  border-left-color: #00ff64;
+  background: rgba(0, 255, 100, 0.05);
+}
+
+.log-danger {
+  border-left-color: #ff6464;
+  background: rgba(255, 100, 100, 0.05);
+}
+
+.log-warning {
+  border-left-color: #ffc800;
+  background: rgba(255, 200, 0, 0.05);
+}
+
+.log-info {
+  border-left-color: var(--cyan);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.log-default {
+  border-left-color: var(--gray-light);
+  background: rgba(128, 128, 128, 0.05);
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.log-timestamp {
+  color: var(--gray-light);
+}
+
+.log-type {
+  background: rgba(0, 212, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.log-content p {
+  margin: 4px 0;
+  color: var(--white);
+}
+
+.log-content p .highlight {
+  color: var(--cyan-light);
+  font-weight: 600;
+}
+
+.log-content p .success {
+  color: #00ff64;
+  font-weight: 600;
+}
+
+.log-content p .danger {
+  color: #ff6464;
+  font-weight: 600;
+}
+.logs-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  border-bottom: 2px solid var(--border-color, #333);
+  padding-bottom: 10px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #999);
+  cursor: pointer;
+  padding: 8px 16px;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  color: var(--cyan, #00d4ff);
+  border-bottom-color: var(--cyan, #00d4ff);
+}
+
+.credentials-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  background: rgba(0, 30, 40, 0.4);
+}
+.credentials-table th,
+.credentials-table td {
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  padding: 6px 12px;
+  text-align: left;
+}
+.credentials-table th {
+  background: rgba(0, 212, 255, 0.1);
+  color: var(--cyan);
+}
+.ssh-commands .command-list {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.command-item {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 4px 0;
+}
+.cmd-time {
+  color: var(--gray-light);
+  font-size: 11px;
+  min-width: 160px;
+}
+.cmd-text {
+  color: #b0e0ff;
+  font-family: 'Courier New', monospace;
+}

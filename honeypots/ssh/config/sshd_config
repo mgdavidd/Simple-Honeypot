@@ -1,0 +1,32 @@
+Port 22
+Protocol 2
+
+# Identidad del servidor
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+PasswordAuthentication yes
+PubkeyAuthentication no
+ChallengeResponseAuthentication no
+PermitRootLogin no
+UsePAM yes
+
+MaxAuthTries 10
+LoginGraceTime 60
+
+UseDNS no
+
+StrictModes no
+
+# Seguridad: evitar que se use el honeypot como pivote
+AllowTcpForwarding no
+X11Forwarding no
+PermitTunnel no
+GatewayPorts no
+
+# Cosmético: mensaje de bienvenida
+PrintMotd yes
+Banner none
+
+Subsystem sftp /usr/lib/openssh/sftp-server

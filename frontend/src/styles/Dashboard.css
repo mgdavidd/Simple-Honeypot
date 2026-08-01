@@ -1,0 +1,59 @@
+.dashboard {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+}
+
+.header {
+  background: var(--darker);
+  border-bottom: 2px solid var(--cyan);
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.header h1 {
+  color: var(--cyan-light);
+  font-size: 28px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: rgba(255, 68, 68, 0.2);
+  border: 1px solid #ff6666;
+  color: #ff8888;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 68, 68, 0.4);
+}
+
+.content {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.services-container h2 {
+  color: var(--cyan-light);
+  margin-bottom: 30px;
+  font-size: 20px;
+}
+
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 25px;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--cyan);
+  font-size: 18px;
+}

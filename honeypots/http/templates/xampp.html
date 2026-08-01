@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>XAMPP Control Panel - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .xampp-login {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+            animation: slideUp 0.4s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .xampp-header {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .xampp-logo {
+            font-size: 42px;
+            margin-bottom: 8px;
+        }
+        .xampp-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .xampp-subtitle {
+            font-size: 12px;
+            opacity: 0.95;
+        }
+        .xampp-body {
+            padding: 40px;
+        }
+        .xampp-body p {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+        .error-box {
+            background: #fff3e0;
+            border: 1px solid #ffe0b2;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #d84315;
+            display: flex;
+            gap: 8px;
+        }
+        .error-box::before {
+            content: "⚠";
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3);
+        }
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        .footer-links {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+        }
+        .footer-links a {
+            color: #ff6b35;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .footer-links a:hover {
+            color: #f7931e;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="xampp-login">
+    <div class="xampp-header">
+        <div class="xampp-logo">X</div>
+        <div class="xampp-title">XAMPP</div>
+        <div class="xampp-subtitle">Apache + MySQL + PHP + Perl</div>
+    </div>
+
+    <div class="xampp-body">
+        <p>
+            This is a restricted area. Please authenticate with your administrator 
+            credentials to access the XAMPP Control Panel.
+        </p>
+
+        {% if error %}
+        <div class="error-box">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input 
+                    type="text" 
+                    name="username" 
+                    id="username"
+                    placeholder="admin"
+                    autocomplete="username"
+                    autofocus
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    name="password" 
+                    id="password"
+                    placeholder="••••••••"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+
+        <div class="footer-links">
+            XAMPP v3.3.0 | Apache 2.4.58 | MySQL 8.0.35 | PHP 8.2.12
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

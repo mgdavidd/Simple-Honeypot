@@ -1,0 +1,5 @@
+admin:admin12345
+ubuntu:ubuntu
+deploy:deploy123
+test:test1234
+juan:juancho

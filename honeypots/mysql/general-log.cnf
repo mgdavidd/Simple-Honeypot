@@ -1,0 +1,11 @@
+[mysqld]
+
+# El general log lo activa el agente dinámicamente DESPUÉS del init
+# para evitar que el setup de timezones y usuarios llene los logs.
+# general_log = OFF  (default)
+
+# Registrar conexiones fallidas en error log
+log_error_verbosity = 3
+
+# Forzar TCP: registra IP real en lugar de "localhost"
+skip_name_resolve   = ON
