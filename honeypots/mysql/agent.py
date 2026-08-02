@@ -25,8 +25,11 @@ TEMPLATE_NAME    = os.getenv("TEMPLATE_NAME", "empty")
 LOG_FILE         = "/var/log/mysql/general.log"
 FAILED_THRESHOLD = int(os.getenv("CONFIG_FAILED_THRESHOLD", "20"))
 BAN_SECONDS      = int(os.getenv("CONFIG_BAN_SECONDS", "600"))
+# "verbose"  → log everything (current behaviour)
+# "filtered" → drop monitoring noise, only keep queries with attacker intent
+LOG_MODE         = os.getenv("CONFIG_LOG_MODE", "verbose").lower()
 
-print(f"[mysql-agent] {SERVICE_ID} iniciado | Template: {TEMPLATE_NAME}")
+print(f"[mysql-agent] {SERVICE_ID} iniciado | Template: {TEMPLATE_NAME} | Log mode: {LOG_MODE}")
 
 
 # ── Análisis de queries ───────────────────────────────────────────────────────
@@ -69,6 +72,153 @@ class QueryAnalyzer:
             "ALTER":  "alter",  "USE":    "use",    "SHOW":   "show",
             "DESCRIBE": "describe",
         }.get(first, "other")
+
+
+# ── Filtro de ruido (modo filtered) ──────────────────────────────────────────
+
+class NoiseFilter:
+    """
+    Decide si una query debe descartarse cuando LOG_MODE == 'filtered'.
+
+    Ruido típico de clientes legítimos / monitoring:
+      - Health checks de MySQL Workbench, Prometheus exporters, etc.
+      - Comandos administrativos automáticos de drivers y ORMs.
+      - Queries de introspección que no revelan intención ofensiva.
+
+    Se conserva SIEMPRE:
+      - Cualquier query con un patrón SQLi detectado.
+      - DML sobre tablas de usuario (INSERT / UPDATE / DELETE / DROP / ALTER / CREATE).
+      - SELECT con cláusulas que sugieren enumeración (UNION, INFORMATION_SCHEMA, etc.).
+      - Comandos que establecen contexto interesante (USE <db>, LOAD DATA, CALL, EXEC).
+    """
+
+    # Queries exactas (case-insensitive) que son puro ruido de monitoring
+    _EXACT_NOISE: set[str] = {
+        "show global status",
+        "show status",
+        "show variables",
+        "show global variables",
+        "show slave status",
+        "show replica status",
+        "show processlist",
+        "show full processlist",
+        "show engine innodb status",
+        "select 1",
+        "select 1 as keepalive",
+        "select now()",
+        "select version()",
+        "select database()",
+        "select user()",
+        "select current_user()",
+    }
+
+    # Prefijos de ruido (case-insensitive).  Solo se aplican si la query NO tiene SQLi.
+    _NOISE_PREFIXES: tuple[str, ...] = (
+        # Workbench / drivers — introspección de esquema
+        "select @@",
+        "set names",
+        "set character_set",
+        "set autocommit",
+        "set session",
+        "set global",
+        "set @@",
+        "set sql_mode",
+        "set time_zone",
+        "set foreign_key_checks",
+        "set unique_checks",
+        "set sql_safe_updates",
+        "set net_write_timeout",
+        "set net_read_timeout",
+        "set wait_timeout",
+        "show create table",
+        "show create database",
+        "show tables",
+        "show columns",
+        "show full columns",
+        "show index",
+        "show keys",
+        "show triggers",
+        "show events",
+        "show warnings",
+        "show errors",
+        "show grants",
+        "show charset",
+        "show collation",
+        "show engines",
+        "show plugins",
+        "show open tables",
+        "show binary logs",
+        "show master status",
+        "show databases",
+        # ORM / driver ping patterns
+        "/* ping */",
+        "/* mysql-connector",
+        "/* jdbc",
+        # MySQL Workbench metadata queries
+        "select table_name",
+        "select column_name",
+        "select schema_name",
+        "select routine_name",
+        "select trigger_name",
+        "select constraint_name",
+        "select view_name",
+        "information_schema.tables",
+        "information_schema.columns",
+        "information_schema.routines",
+        "information_schema.triggers",
+        "information_schema.views",
+        "information_schema.statistics",
+        "information_schema.key_column_usage",
+        "information_schema.referential_constraints",
+        "performance_schema.",
+        "sys.",
+        # Workbench session bootstrap
+        "select @@lower_case_table_names",
+        "select @@version_comment",
+        "select @@session.transaction_read_only",
+        "commit",
+        "rollback",
+        "start transaction",
+        "begin",
+        "savepoint",
+        "release savepoint",
+    )
+
+    # Si la query contiene ANY of these tokens it is always interesting
+    _ALWAYS_INTERESTING_RE = re.compile(
+        r"""
+        \b(UNION|INFORMATION_SCHEMA|LOAD\s+DATA|INTO\s+OUTFILE|INTO\s+DUMPFILE|
+           SLEEP\s*\(|BENCHMARK\s*\(|EXTRACTVALUE|UPDATEXML|
+           EXEC\s*\(|EXECUTE|XP_CMDSHELL|OPENROWSET|
+           DROP\s+TABLE|DROP\s+DATABASE|TRUNCATE|
+           ALTER\s+TABLE|CREATE\s+USER|GRANT\s+ALL|
+           CALL\s+\w|PROCEDURE|FUNCTION)\b
+        |--\s|#\s*$|/\*.*?\*/
+        """,
+        re.IGNORECASE | re.VERBOSE | re.DOTALL,
+    )
+
+    @classmethod
+    def should_drop(cls, query: str, sqli_pattern: str) -> bool:
+        """Return True when the query is noise and should NOT be logged."""
+        # Never drop queries that already triggered a SQLi pattern
+        if sqli_pattern != "none":
+            return False
+
+        # Never drop if the query contains clearly interesting tokens
+        if cls._ALWAYS_INTERESTING_RE.search(query):
+            return False
+
+        q = query.strip().lower()
+
+        if q in cls._EXACT_NOISE:
+            return True
+
+        for prefix in cls._NOISE_PREFIXES:
+            if q.startswith(prefix) or prefix in q:
+                return True
+
+        return False
 
 
 # ── Monitor principal ─────────────────────────────────────────────────────────
@@ -241,16 +391,24 @@ class MySQLAgentMonitor:
 
         qtype = QueryAnalyzer.query_type(query)
 
-        if qtype == "other" and (
-            query.lower().startswith(("set ", "select 1")) or
-            re.match(r"^\s*select\s+@@version_comment\s+limit\s+1\s*$", query, re.IGNORECASE)
-        ):
-            return
+        # ── Filtro verbose (comportamiento original) ──────────────────────────
+        # Descartar solo las queries de bootstrap del driver que no aportan nada
+        if LOG_MODE == "verbose":
+            if qtype == "other" and (
+                query.lower().startswith(("set ", "select 1")) or
+                re.match(r"^\s*select\s+@@version_comment\s+limit\s+1\s*$", query, re.IGNORECASE)
+            ):
+                return
 
         sqli = QueryAnalyzer.sqli_pattern(query)
         tool = QueryAnalyzer.detect_tool(query) if sqli != "none" else "none"
 
-        print(f"[mysql-agent] Query ({qtype}) | SQLi={sqli} | {query[:60]}")
+        # ── Filtro agresivo (modo filtered) ──────────────────────────────────
+        # Descarta ruido de monitoring / Workbench / ORMs sin intención ofensiva
+        if LOG_MODE == "filtered" and NoiseFilter.should_drop(query, sqli):
+            return
+
+        print(f"[mysql-agent] Query ({qtype}) | SQLi={sqli} | mode={LOG_MODE} | {query[:60]}")
 
         send_log(SERVICE_ID, {
             "ip":            conn["ip"],

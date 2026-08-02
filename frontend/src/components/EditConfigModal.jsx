@@ -29,6 +29,7 @@ const DEFAULT_CONFIGS = {
     db_password: 'password123',
     ban_seconds: 600,
     failed_threshold: 20,
+    log_mode: 'verbose',
   }
 }
 
@@ -69,6 +70,11 @@ export default function EditConfigModal({ service, onClose, onSave }) {
   // Estado local para el toggle de rate limiting
   const [enableRateLimit, setEnableRateLimit] = useState(
     config.enable_rate_limit !== false
+  )
+
+  // Estado local para el modo de logging de MySQL
+  const [logMode, setLogMode] = useState(
+    config.log_mode ?? 'verbose'
   )
 
   // Asegurar que usersText sea siempre un string
@@ -147,6 +153,7 @@ export default function EditConfigModal({ service, onClose, onSave }) {
         db_password: rawConfig.db_password ?? 'password123',
         ban_seconds: rawConfig.ban_seconds ?? 600,
         failed_threshold: rawConfig.failed_threshold ?? 20,
+        log_mode: logMode,
       }
     }
     return rawConfig
@@ -272,6 +279,48 @@ export default function EditConfigModal({ service, onClose, onSave }) {
                 <strong>ℹ️ Base de datos:</strong> El nombre de la base de datos se toma automáticamente del archivo <code>.sql</code> si incluye <code>CREATE DATABASE</code> o <code>USE</code>. 
                 Si no lo incluye, se usará <code>honeypot</code>. Asegúrate de que tu plantilla defina la base de datos correctamente.
               </div>
+
+              {/* Log mode toggle */}
+              <div className="toggle-group">
+                <div className="toggle-info">
+                  <span className="toggle-label">Query Log Mode</span>
+                  <span className="toggle-description">
+                    {logMode === 'filtered'
+                      ? 'Filtered — solo queries con intención ofensiva'
+                      : 'Verbose — registra todas las queries'}
+                  </span>
+                </div>
+                <button
+                  className={`toggle-switch ${logMode === 'filtered' ? 'toggle-switch--on' : ''}`}
+                  onClick={() => {
+                    const next = logMode === 'verbose' ? 'filtered' : 'verbose'
+                    setLogMode(next)
+                    setConfig({ ...config, log_mode: next })
+                  }}
+                  aria-label="Toggle log mode"
+                >
+                  <span className="toggle-thumb" />
+                </button>
+              </div>
+
+              {logMode === 'filtered' && (
+                <div className="modal-warning" style={{ margin: '0 0 16px 0' }}>
+                  <strong>🔇 Modo Filtered activo:</strong> Se descartan automáticamente
+                  health-checks de monitoring, consultas de introspección de MySQL Workbench,
+                  comandos <code>SET</code>, <code>SHOW</code> rutinarios y pings de drivers.
+                  Solo se registran queries con potencial intención ofensiva o DML real sobre
+                  tablas de usuario.
+                </div>
+              )}
+
+              {logMode === 'verbose' && (
+                <div className="modal-warning" style={{ margin: '0 0 16px 0' }}>
+                  <strong>📋 Modo Verbose activo:</strong> Se registran todas las queries
+                  recibidas (excepto el bootstrap mínimo del driver). Útil para auditoría
+                  completa, pero puede generar mucho ruido con clientes como MySQL Workbench
+                  o exporters de monitoring.
+                </div>
+              )}
 
               <div className="upload-section">
                 <h4>Upload Custom Template</h4>

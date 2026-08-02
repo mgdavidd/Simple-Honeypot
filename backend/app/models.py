@@ -150,6 +150,7 @@ class ServiceConfigMySQL(BaseModel):
     database_sql: str = ""
     ban_seconds: int = 600
     failed_threshold: int = 20
+    log_mode: str = "verbose"  # "verbose" | "filtered"
 
 
 class ServiceCreate(BaseModel):
