@@ -1,18 +1,39 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends iptables && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y iptables && rm -rf /var/lib/apt/lists/*
-
 COPY http/requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ../common /app/common
+# Código de la aplicación HTTP
+COPY http/config.py \
+     http/credentials.py \
+     http/server.py \
+     http/store.py \
+     http/template_utils.py \
+     ./
 
-# Copiar todos los módulos del servicio http
-COPY http/ /app/
+COPY http/routes_wordpress.py \
+     http/routes_phpmyadmin.py \
+     ./
 
-RUN mkdir -p /var/log/honeypot
+COPY http/templates/ ./templates/
+
+# Módulos comunes
+COPY common/ ./common/
+
+RUN mkdir -p /data
+
+ENV FLASK_ENV=production \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DATA_DIR=/data
 
 EXPOSE 5000
-CMD ["python3", "-u", "server.py"]
+
+CMD ["python", "server.py"]

@@ -396,7 +396,7 @@ export default function EditConfigModal({ service, onClose, onSave }) {
                   onChange={e => setConfig({ ...config, template: e.target.value })}
                 >
                   <option value="wordpress">WordPress</option>
-                  <option value="xampp">XAMPP</option>
+                  <option value="phpmyadmin">phpMyAdmin</option>
                 </select>
               </div>
 

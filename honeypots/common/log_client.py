@@ -3,7 +3,7 @@ import requests
 import json
 import time
 from typing import Dict, Any
-from datetime import datetime, timezone
+from .time_utils import colombia_now
 
 API_URL = os.getenv("API_URL", "http://api:8000")
 
@@ -42,7 +42,7 @@ def send_log(service_id: str, data: Dict[str, Any], retry: int = RETRY_ATTEMPTS)
     
     # Asegurar que el timestamp esté presente si no existe
     if "timestamp" not in data and "connection_time" not in data and "detected_at" not in data:
-        data["timestamp"] = datetime.now().isoformat()
+        data["timestamp"] = colombia_now().isoformat()
     
     payload = {
         "service_id": service_id,

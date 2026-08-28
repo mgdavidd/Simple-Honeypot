@@ -1,0 +1,87 @@
+{% extends "wp_admin_base.html" %}
+{% set active_menu = 'plugins' %}
+{% block title %}Plugins{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <h1>
+    Plugins
+    <a href="#" class="page-title-action">Add New Plugin</a>
+  </h1>
+
+  <ul class="subsubsub">
+    <li><a href="/wp-admin/plugins.php" class="current">All <span class="count">(4)</span></a></li>
+    <li><a href="/wp-admin/plugins.php?plugin_status=active">Active <span class="count">(2)</span></a></li>
+    <li><a href="/wp-admin/plugins.php?plugin_status=inactive">Inactive <span class="count">(2)</span></a></li>
+  </ul>
+
+  <table class="wp-list-table widefat fixed striped plugins">
+    <thead>
+      <tr>
+        <th style="width:28px;"><input type="checkbox"></th>
+        <th>Plugin</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Active plugins -->
+      <tr class="active">
+        <td><input type="checkbox"></td>
+        <td>
+          <strong>Akismet Anti-Spam: Spam Protection</strong>
+          <div class="row-actions">
+            <span><a href="#">Settings</a></span> |
+            <span><a href="#" style="color:#b32d2e;">Deactivate</a></span>
+          </div>
+        </td>
+        <td>
+          <div class="plugin-description"><p>Used by millions, Akismet is quite possibly the best way in the world to protect your blog from spam. It keeps your site protected even while you sleep.</p></div>
+          <p class="plugin-author">Version 5.3.3 | By <a href="#">Automattic</a> | <a href="#">View details</a></p>
+        </td>
+      </tr>
+      <tr class="active">
+        <td><input type="checkbox"></td>
+        <td>
+          <strong>Hello Dolly</strong>
+          <div class="row-actions">
+            <span><a href="#" style="color:#b32d2e;">Deactivate</a></span>
+          </div>
+        </td>
+        <td>
+          <div class="plugin-description"><p>This is not just a plugin, it symbolizes the hope and enthusiasm of an entire generation summed up in two words sung most famously by Louis Armstrong: Hello, Dolly.</p></div>
+          <p class="plugin-author">Version 1.7.2 | By <a href="#">Matt Mullenweg</a></p>
+        </td>
+      </tr>
+      <!-- Inactive plugins -->
+      <tr class="inactive" style="background:#fcf9e8;">
+        <td><input type="checkbox"></td>
+        <td>
+          <strong>WooCommerce</strong>
+          <div class="row-actions">
+            <span><a href="#">Activate</a></span> |
+            <span><a href="#">Delete</a></span>
+          </div>
+        </td>
+        <td>
+          <div class="plugin-description"><p>WooCommerce is an open-source e-commerce plugin for WordPress.</p></div>
+          <p class="plugin-author">Version 9.4.2 | By <a href="#">Automattic</a></p>
+        </td>
+      </tr>
+      <tr class="inactive" style="background:#fcf9e8;">
+        <td><input type="checkbox"></td>
+        <td>
+          <strong>Yoast SEO</strong>
+          <div class="row-actions">
+            <span><a href="#">Activate</a></span> |
+            <span><a href="#">Delete</a></span>
+          </div>
+        </td>
+        <td>
+          <div class="plugin-description"><p>The first true all-in-one SEO solution for WordPress, including on-page content analysis, XML sitemaps and much more.</p></div>
+          <p class="plugin-author">Version 23.5 | By <a href="#">Team Yoast</a></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

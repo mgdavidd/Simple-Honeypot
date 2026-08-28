@@ -5,7 +5,6 @@ import json
 import tarfile
 import io
 from dataclasses import dataclass
-from typing import Optional
 from pathlib import Path
 
 import docker
@@ -45,7 +44,7 @@ class DockerManager:
         replica_id: int,
         port: int,
         persistent: bool = False,
-        config: Optional[dict] = None,
+        config: dict | None = None,
     ) -> ContainerInfo:
         if not is_port_available(port):
             raise ValueError(f"Port {port} is already in use")
@@ -142,6 +141,13 @@ class DockerManager:
                     else:
                         environment[f"CONFIG_{key.upper()}"] = str(value)
 
+            # Crear el volumen fresco para este contenedor.
+            # Si ya existía uno (de una sesión anterior destruida), se elimina primero
+            # para que el atacante siempre empiece desde el estado base.
+            # Pause/unpause NO pasa por aquí, así que los datos se conservan
+            # durante una sesión activa.
+            self._create_fresh_http_volume(replica_id)
+
         elif service_type == "ssh":
             if config:
                 for key, value in config.items():
@@ -169,6 +175,15 @@ class DockerManager:
         try:
             nano_cpus = int(float(limits.get("cpu", 0.5)) * 1_000_000_000)
 
+            # Volúmenes: HTTP monta un volumen nombrado persistente en /data
+            # para que los cambios del atacante (posts, usuarios, tablas PMA)
+            # sobrevivan recreaciones del contenedor.
+            volumes: dict = {}
+            if service_type == "http":
+                vol_name = f"http-data-{replica_id}"
+                volumes[vol_name] = {"bind": "/data", "mode": "rw"}
+                print(f"[docker] HTTP volumen de datos: {vol_name} → /data")
+
             container = self.client.containers.create(
                 image=image,
                 name=container_name,
@@ -182,6 +197,12 @@ class DockerManager:
                 pids_limit=limits.get("pids", 50),
                 auto_remove=not persistent,
                 cap_add=["NET_ADMIN", "NET_RAW"],
+                labels={
+                    "honeypot.manager": "true",
+                    "honeypot.service": service_type,
+                    "honeypot.replica": str(replica_id),
+                },
+                volumes=volumes if volumes else None,
             )
 
             if service_type == "mysql" and temp_file:
@@ -219,23 +240,44 @@ class DockerManager:
             print(f"[docker] Error creando {container_name}: {e}")
             raise ValueError(f"Docker error: {str(e)}")
 
-    def destroy_container(self, container_id: str) -> bool:
+    def destroy_container(
+        self,
+        container_id: str,
+        service_type: str | None = None,
+        replica_id: int | None = None,
+    ) -> bool:
+        """
+        Destruye el contenedor y, si es HTTP, elimina también su volumen de datos.
+        Esto garantiza que la próxima vez que se cree un contenedor HTTP para la
+        misma réplica arranque desde el estado base sin rastro de la sesión anterior.
+
+        pause_container / unpause_container no llaman a este método, así que
+        los datos del atacante se conservan íntegros mientras el contenedor esté pausado.
+        """
+        destroyed = False
         try:
             container = self.client.containers.get(container_id)
             if container.status == "running":
                 container.stop(timeout=2)
             container.remove(force=True)
             print(f"[docker] {container_id[:12]} destruido")
-            return True
+            destroyed = True
         except NotFound:
             print(f"[docker] {container_id[:12]} no encontrado (ya eliminado)")
-            return False
+            destroyed = True
         except DockerException as e:
             if hasattr(e, 'status_code') and e.status_code == 409:
                 print(f"[docker] {container_id[:12]} ya está siendo eliminado, se considera destruido")
-                return True
-            print(f"[docker] Error destruyendo {container_id[:12]}: {e}")
-            raise
+                destroyed = True
+            else:
+                print(f"[docker] Error destruyendo {container_id[:12]}: {e}")
+                raise
+
+        # Eliminar volumen HTTP para que la próxima sesión empiece desde estado base
+        if destroyed and service_type == "http" and replica_id is not None:
+            self._delete_http_volume(replica_id)
+
+        return destroyed
 
     def pause_container(self, container_id: str) -> bool:
         try:
@@ -270,8 +312,54 @@ class DockerManager:
     def _get_internal_port(service: str) -> int:
         return {"ssh": 22, "http": 5000, "mysql": 3306}.get(service, 5000)
 
+    def _create_fresh_http_volume(self, replica_id: int) -> None:
+        """
+        Elimina el volumen http-data-{replica_id} si existía y crea uno nuevo vacío.
 
-_manager: Optional[DockerManager] = None
+        Se llama SOLO desde create_container, garantizando que cada nueva sesión
+        del honeypot HTTP empiece desde el estado base (JSON defaults de store.py),
+        sin datos de atacantes anteriores.
+
+        No se llama desde pause/unpause, por lo que los datos del atacante
+        se conservan íntegros mientras el contenedor esté pausado.
+        """
+        vol_name = f"http-data-{replica_id}"
+        # Eliminar si existe (sesión anterior destruida)
+        self._delete_http_volume(replica_id)
+        # Crear fresco
+        try:
+            self.client.volumes.create(
+                name=vol_name,
+                driver="local",
+                labels={
+                    "honeypot": "true",
+                    "service": "http",
+                    "replica": str(replica_id),
+                },
+            )
+            print(f"[docker] Volumen {vol_name} creado (estado base)")
+        except DockerException as e:
+            print(f"[docker] Advertencia: no se pudo crear volumen {vol_name}: {e}")
+
+    def _delete_http_volume(self, replica_id: int) -> bool:
+        """
+        Elimina el volumen de datos del honeypot HTTP.
+        Llamado automáticamente por destroy_container y _create_fresh_http_volume.
+        """
+        vol_name = f"http-data-{replica_id}"
+        try:
+            vol = self.client.volumes.get(vol_name)
+            vol.remove(force=True)
+            print(f"[docker] Volumen {vol_name} eliminado")
+            return True
+        except docker.errors.NotFound:
+            return False
+        except DockerException as e:
+            print(f"[docker] Error eliminando volumen {vol_name}: {e}")
+            return False
+
+
+_manager: DockerManager | None = None
 
 def get_docker_manager() -> DockerManager:
     global _manager

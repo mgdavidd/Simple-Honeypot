@@ -192,3 +192,103 @@
   color: #b0e0ff;
   font-family: 'Courier New', monospace;
 }
+
+.action-body {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 212, 255, 0.04);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  border-radius: 4px;
+}
+.action-label-badge {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cyan);
+}
+.body-detail { font-size: 12px; }
+.body-detail p { margin: 3px 0; }
+.body-preview {
+  margin-top: 6px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 3px;
+  padding: 6px 8px;
+}
+.preview-label {
+  font-size: 11px;
+  color: #8899aa;
+  margin: 0 0 4px !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.preview-text {
+  color: #c8d8e8;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0 !important;
+}
+.sql-text { color: #89d4ff; }
+.body-kv {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kv-row {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.kv-key {
+  color: #8899aa;
+  min-width: 140px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+}
+.kv-val {
+  color: var(--cyan-light);
+  word-break: break-all;
+}
+.rows-preview { margin-top: 6px; }
+.preview-table {
+  border-collapse: collapse;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  background: rgba(0,0,0,0.2);
+  width: 100%;
+}
+.preview-table th {
+  background: rgba(0, 212, 255, 0.15);
+  padding: 3px 8px;
+  text-align: left;
+  color: var(--cyan);
+  border: 1px solid rgba(0,212,255,0.15);
+  white-space: nowrap;
+}
+.preview-table td {
+  padding: 2px 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #c8d8e8;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preview-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+.body-error { color: #ff8888 !important; }
+.body-json {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #c8d8e8;
+  background: rgba(0,0,0,0.2);
+  padding: 6px 8px;
+  border-radius: 3px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 4px 0 0;
+}

@@ -1,7 +1,7 @@
 import os
 import bcrypt
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, Cookie
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ load_dotenv()
 
 from .database import get_db
 from .models import AdminUser
+from .time_utils import colombia_now
 
 
 SECRET_KEY = os.getenv(
@@ -55,9 +56,9 @@ def create_access_token(
     to_encode = data.copy()
 
     if expires_delta:
-        expire = datetime.now() + expires_delta
+        expire = colombia_now() + expires_delta
     else:
-        expire = datetime.now() + timedelta(
+        expire = colombia_now() + timedelta(
             minutes=ACCESS_TOKEN_EXPIRE_MINUTES
         )
 

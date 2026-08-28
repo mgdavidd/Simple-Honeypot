@@ -1,14 +1,24 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
+
+from ..auth import get_current_user_from_cookie
+from ..crud import ContainerCRUD
 from ..database import get_db
 from ..models import (
-    SSHSession, HTTPRequest, MySQLQuery, BruteForceAlert,
-    SSHSessionResponse, HTTPRequestResponse, MySQLQueryResponse, BruteForceAlertResponse,
-    AdminUser
+    AdminUser,
+    BruteForceAlert,
+    BruteForceAlertResponse,
+    HTTPRequest,
+    HTTPRequestResponse,
+    MySQLQuery,
+    MySQLQueryResponse,
+    SSHSession,
+    SSHSessionResponse,
 )
-from ..crud import ContainerCRUD
-from ..auth import get_current_user_from_cookie
+from ..time_utils import colombia_now
 
 router = APIRouter()
 
@@ -32,10 +42,13 @@ def add_log(payload: dict, db: Session = Depends(get_db)):
     def parse_dt(value):
         if value:
             try:
-                return datetime.fromisoformat(value)
+                parsed = datetime.fromisoformat(value)
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=ZoneInfo("America/Bogota"))
+                return parsed
             except ValueError:
                 pass
-        return datetime.now()
+        return colombia_now()
 
     try:
         log_entry = None
@@ -72,7 +85,7 @@ def add_log(payload: dict, db: Session = Depends(get_db)):
                 credentials_tried=credentials,
                 commands=data.get("commands", []),
                 session_start=parse_dt(data.get("connection_time")),
-                session_end=datetime.now(),
+                session_end=colombia_now(),
             )
         elif service_type == "http":
             log_entry = HTTPRequest(
@@ -86,6 +99,8 @@ def add_log(payload: dict, db: Session = Depends(get_db)):
                 password=data.get("password"),
                 login_success=data.get("login_success", False),
                 form_data=data.get("form_data", {}),
+                action_label=data.get("action_label"),
+                body=data.get("body"),
                 status_code=data.get("status_code"),
                 response_size=data.get("response_size"),
                 timestamp=parse_dt(data.get("timestamp")),
@@ -121,12 +136,12 @@ def add_log(payload: dict, db: Session = Depends(get_db)):
 
 @router.get("/api/logs")
 def get_logs(
-    service_type: str = None,
-    service_id: str = None,
-    request_type: str = None,          # para HTTP
-    query_type: str = None,            # para MySQL
-    sqli_pattern: str = None,          # para MySQL
-    detected_tool: str = None,         # para MySQL
+    service_type: str | None = None,
+    service_id: str | None = None,
+    request_type: str | None = None,          # para HTTP
+    query_type: str | None = None,            # para MySQL
+    sqli_pattern: str | None = None,          # para MySQL
+    detected_tool: str | None = None,         # para MySQL
     limit: int = 100,
     db: Session = Depends(get_db),
     current_user: AdminUser = Depends(get_current_user_from_cookie),

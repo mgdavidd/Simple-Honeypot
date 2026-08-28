@@ -1,0 +1,58 @@
+{% extends "wp_admin_base.html" %}
+{% set active_menu = 'media' %}
+{% block title %}Media Library{% endblock %}
+
+{% block content %}
+<style>
+.media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 16px; }
+.media-item { border: 1px solid #c3c4c7; background: #fff; border-radius: 2px; overflow: hidden; cursor: pointer; }
+.media-item:hover { border-color: #2271b1; }
+.media-thumb { width: 100%; height: 120px; background: #f0f0f1; display: flex; align-items: center; justify-content: center; font-size: 36px; color: #646970; }
+.media-info { padding: 6px 8px; font-size: 11px; color: #50575e; }
+.media-filename { font-weight: 600; color: #2c3338; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+
+<div class="wrap">
+  <h1>
+    Media Library
+    <a href="#" class="page-title-action">Add New Media File</a>
+  </h1>
+
+  <ul class="subsubsub">
+    <li><a href="/wp-admin/upload.php" class="current">All media items <span class="count">(7)</span></a></li>
+    <li><a href="#">Images <span class="count">(5)</span></a></li>
+    <li><a href="#">Unattached <span class="count">(2)</span></a></li>
+  </ul>
+
+  <div class="media-grid">
+    <div class="media-item">
+      <div class="media-thumb">&#128444;</div>
+      <div class="media-info"><p class="media-filename">header-image.jpg</p><p>1920 × 1080</p></div>
+    </div>
+    <div class="media-item">
+      <div class="media-thumb">&#128444;</div>
+      <div class="media-info"><p class="media-filename">logo-final.png</p><p>400 × 200</p></div>
+    </div>
+    <div class="media-item">
+      <div class="media-thumb">&#128444;</div>
+      <div class="media-info"><p class="media-filename">about-team.jpg</p><p>800 × 600</p></div>
+    </div>
+    <div class="media-item">
+      <div class="media-thumb">&#128196;</div>
+      <div class="media-info"><p class="media-filename">privacy-policy.pdf</p><p>245 KB</p></div>
+    </div>
+    <div class="media-item">
+      <div class="media-thumb">&#128444;</div>
+      <div class="media-info"><p class="media-filename">banner-2024.jpg</p><p>1200 × 400</p></div>
+    </div>
+    <div class="media-item">
+      <div class="media-thumb">&#128444;</div>
+      <div class="media-info"><p class="media-filename">contact-bg.jpg</p><p>1920 × 600</p></div>
+    </div>
+    <div class="media-item">
+      <div class="media-thumb">&#128196;</div>
+      <div class="media-info"><p class="media-filename">sample-data.csv</p><p>12 KB</p></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

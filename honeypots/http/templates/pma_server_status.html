@@ -1,0 +1,60 @@
+{% extends "pma_base.html" %}
+{% set active_tab = 'status' %}
+{% block title %}Server Status{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/phpmyadmin/sql.php">localhost</a> &#8250; Server status
+</div>
+
+<div class="page-content">
+  <h2 style="font-size:14px; margin:0 0 12px;">Server status</h2>
+
+  <table class="table" style="width:auto; min-width:500px; margin-bottom:20px;">
+    <thead><tr><th colspan="2">General</th></tr></thead>
+    <tbody>
+      <tr><td>Server</td><td><strong>Localhost via UNIX socket</strong></td></tr>
+      <tr><td>Server type</td><td>MySQL</td></tr>
+      <tr><td>Server version</td><td>8.0.35 - MySQL Community Server - GPL</td></tr>
+      <tr><td>Protocol version</td><td>10</td></tr>
+      <tr><td>User</td><td><strong>{{ username }}@localhost</strong></td></tr>
+      <tr><td>Server charset</td><td>UTF-8 Unicode (utf8mb4)</td></tr>
+      <tr><td>Uptime</td><td>3 hours, 27 minutes, 14 seconds</td></tr>
+      <tr><td>Started since</td><td>{{ now.strftime('%Y-%m-%d %H:%M:%S') if now is defined else '2024-11-14 07:00:00' }}</td></tr>
+    </tbody>
+  </table>
+
+  <table class="table" style="width:auto; min-width:500px; margin-bottom:20px;">
+    <thead><tr><th colspan="2">Traffic</th></tr></thead>
+    <tbody>
+      <tr><td>Received</td><td>1.4 MiB</td></tr>
+      <tr><td>Sent</td><td>82.6 MiB</td></tr>
+      <tr><td>Total</td><td>84 MiB</td></tr>
+    </tbody>
+  </table>
+
+  <table class="table" style="width:auto; min-width:500px; margin-bottom:20px;">
+    <thead><tr><th colspan="2">Connections</th></tr></thead>
+    <tbody>
+      <tr><td>Max. concurrent connections</td><td>151</td></tr>
+      <tr><td>Connections</td><td>1,247 (2.03% of max simultaneous)</td></tr>
+      <tr><td>Aborted connections</td><td>3 (0.24%)</td></tr>
+      <tr><td>Total</td><td>12,492</td></tr>
+    </tbody>
+  </table>
+
+  <table class="table" style="width:auto; min-width:500px; margin-bottom:20px;">
+    <thead><tr><th>Variable</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Threads connected</td><td>2</td></tr>
+      <tr><td>Threads running</td><td>1</td></tr>
+      <tr><td>Threads cached</td><td>7</td></tr>
+      <tr><td>Threads created</td><td>12</td></tr>
+      <tr><td>Slow queries</td><td>0</td></tr>
+      <tr><td>Opens</td><td>383</td></tr>
+      <tr><td>Open tables</td><td>292</td></tr>
+      <tr><td>Queries per second avg.</td><td>1.02</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

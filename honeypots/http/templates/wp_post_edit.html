@@ -1,0 +1,126 @@
+{% extends "wp_admin_base.html" %}
+{% set active_menu = 'posts' %}
+{% block title %}{{ post.title if post else 'Add New Post' }}{% endblock %}
+
+{% block content %}
+<style>
+#post-body { display: flex; gap: 20px; }
+#post-body-content { flex: 1; min-width: 0; }
+#postbox-container-1 { width: 260px; flex-shrink: 0; }
+#titlediv { margin-bottom: 16px; }
+#title { font-size: 23px; border: 1px solid #8c8f94; border-radius: 3px; padding: 8px 12px; width: 100%; min-height: 48px; color: #1d2327; font-family: inherit; }
+#title:focus { border-color: #2271b1; box-shadow: 0 0 0 1px #2271b1; outline: none; }
+#wp-content-editor-container { border: 1px solid #8c8f94; border-radius: 3px; background: #fff; }
+#wp-content-media-buttons { padding: 6px 10px; border-bottom: 1px solid #dcdcde; background: #f6f7f7; display: flex; align-items: center; gap: 8px; }
+#content { width: 100%; min-height: 300px; border: none; padding: 12px; font-size: 15px; font-family: inherit; line-height: 1.6; resize: vertical; color: #2c3338; }
+#content:focus { outline: none; }
+.postbox-side { background: #fff; border: 1px solid #c3c4c7; margin-bottom: 16px; }
+.postbox-side h2 { font-size: 14px; padding: 8px 12px; border-bottom: 1px solid #c3c4c7; margin: 0; font-weight: 600; cursor: pointer; color: #1d2327; }
+.postbox-side .inside { padding: 12px; }
+.misc-pub-section { padding: 6px 0; border-bottom: 1px solid #f0f0f1; font-size: 13px; color: #3c434a; }
+.misc-pub-section:last-child { border-bottom: none; }
+.misc-pub-section .edit-date { margin-left: 6px; }
+.submitbox .button-primary { width: 100%; text-align: center; padding: 6px; }
+#save-post { margin-bottom: 6px; width: 100%; }
+select#post_status { width: 100%; margin-top: 4px; }
+</style>
+
+<div class="wrap">
+  <h1>{{ 'Edit Post' if post else 'Add New Post' }}</h1>
+
+  {% if request.args.get('message') == '1' %}
+  <div class="notice notice-success"><p>Post updated. <a href="/?p={{ post.id if post else '' }}">View post</a></p></div>
+  {% endif %}
+
+  <form method="POST" action="/wp-admin/post.php">
+    {# post_ID siempre presente: valor real si editamos, vacío si es nuevo #}
+    <input type="hidden" name="post_ID" value="{{ post.id if post else '' }}">
+    <input type="hidden" name="action" value="editpost">
+    <input type="hidden" name="_wpnonce" value="a1b2c3d4e5">
+
+    <div id="post-body">
+      <div id="post-body-content">
+        <div id="titlediv">
+          <input type="text" name="post_title" id="title"
+                 value="{{ post.title if post else '' }}"
+                 placeholder="Add title" autocomplete="off">
+        </div>
+
+        <div id="wp-content-editor-container">
+          <div id="wp-content-media-buttons">
+            <button type="button" class="button">&#128444; Add Media</button>
+            <span style="color:#646970; font-size:12px; margin-left:auto;">Visual | Text</span>
+          </div>
+          <textarea name="content" id="content">{{ post.content if post else '' }}</textarea>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div id="postbox-container-1">
+
+        <!-- Publish -->
+        <div class="postbox-side">
+          <h2>Publish</h2>
+          <div class="inside">
+            <div class="misc-pub-section">
+              <label for="post_status" style="font-weight:600;">Status:</label>
+              <select name="post_status" id="post_status">
+                <option value="publish" {{ 'selected' if post and post.status == 'publish' else '' }}>Published</option>
+                <option value="draft"   {{ 'selected' if (not post) or (post and post.status == 'draft') else '' }}>Draft</option>
+                <option value="pending">Pending Review</option>
+                <option value="private">Private</option>
+              </select>
+            </div>
+            <div class="misc-pub-section">
+              <strong>Visibility:</strong> Public
+            </div>
+            <div class="misc-pub-section">
+              <strong>Published:</strong>
+              <input type="text" name="aa" value="{{ (post.date[:4] if post else '2024') }}" style="width:44px;">-
+              <input type="text" name="mm" value="{{ (post.date[5:7] if post else '11') }}" style="width:24px;">-
+              <input type="text" name="jj" value="{{ (post.date[8:10] if post else '14') }}" style="width:24px;">
+              @
+              <input type="text" name="hh" value="{{ (post.date[11:13] if post else '10') }}" style="width:24px;">:
+              <input type="text" name="mn" value="{{ (post.date[14:16] if post else '22') }}" style="width:24px;">
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+              <input type="submit" id="save-post" name="save" class="button" value="Save Draft">
+              <input type="submit" id="publish" name="publish" class="button button-primary" value="{{ 'Update' if post else 'Publish' }}">
+            </div>
+            {% if post %}
+            <div style="margin-top:10px; padding-top:10px; border-top:1px solid #f0f0f1;">
+              <a href="/wp-admin/post.php?post={{ post.id }}&action=delete"
+                 class="button-link-delete"
+                 onclick="return confirm('Are you sure?')">Move to Trash</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="postbox-side">
+          <h2>Categories</h2>
+          <div class="inside">
+            <ul style="list-style:none; margin:0; padding:0; max-height:120px; overflow-y:auto; border:1px solid #dcdcde; border-radius:3px; padding:8px;">
+              <li><label><input type="checkbox" name="post_category[]" value="1" checked> Uncategorized</label></li>
+              <li><label><input type="checkbox" name="post_category[]" value="2"> WordPress</label></li>
+              <li><label><input type="checkbox" name="post_category[]" value="3"> News</label></li>
+            </ul>
+            <a href="#" style="font-size:12px; display:block; margin-top:8px;">+ Add New Category</a>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="postbox-side">
+          <h2>Tags</h2>
+          <div class="inside">
+            <input type="text" name="tax_input[post_tag]" style="width:100%; margin-bottom:6px;" placeholder="Add tags, separated by commas">
+            <a href="#" style="font-size:12px;">Choose from the most used tags</a>
+          </div>
+        </div>
+
+      </div><!-- /sidebar -->
+    </div><!-- /post-body -->
+  </form>
+</div>
+{% endblock %}

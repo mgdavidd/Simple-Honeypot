@@ -40,7 +40,11 @@ def shutdown_event():
             if container.docker_container_id:
                 try:
                     print(f"[api] Destruyendo {container.id}...")
-                    docker_mgr.destroy_container(container.docker_container_id)
+                    docker_mgr.destroy_container(
+                        container.docker_container_id,
+                        service_type=container.type,
+                        replica_id=container.replica_id,
+                    )
                     ContainerCRUD.delete(db, container.id)
                 except Exception as e:
                     print(f"[api] Error destruyendo {container.id}: {e}")

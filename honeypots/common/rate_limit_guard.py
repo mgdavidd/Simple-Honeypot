@@ -2,10 +2,9 @@ import threading
 import time
 from collections import defaultdict
 import os
-from datetime import datetime
-
 from .ip_blocker import IPBlocker
 from .log_client import send_log
+from .time_utils import colombia_now
 
 
 class RateLimitGuard:
@@ -47,7 +46,7 @@ class RateLimitGuard:
                 "total_attempts": count,
                 "credentials_tried": [],
                 "action": f"rate_limit_blocked_{self.BAN_SECONDS}s",
-                "detected_at": datetime.now().isoformat()
+                "detected_at": colombia_now().isoformat()
             }
         )
         print(f"[rate-limit] {self.service_id}: {ip} bloqueada por rate limit ({count} GETs en {self.WINDOW_SECONDS}s)")

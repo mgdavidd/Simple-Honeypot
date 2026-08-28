@@ -4,16 +4,19 @@ import sys
 import time
 from collections import defaultdict
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, '/app')
 
 try:
     from honeypots.common.log_client import send_log, send_bruteforce_alert
     from honeypots.common.ip_blocker import IPBlocker
+    from honeypots.common.time_utils import colombia_now
 except ImportError:
     try:
         from common.log_client import send_log, send_bruteforce_alert
         from common.ip_blocker import IPBlocker
+        from common.time_utils import colombia_now
     except ImportError:
         print("[mysql-agent] ERROR: No puede importar módulos comunes")
         sys.exit(1)
@@ -301,9 +304,12 @@ class MySQLAgentMonitor:
             return
         ts_str, conn_id, event, content = m.group(1), m.group(2), m.group(3), m.group(4).strip()
         try:
-            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).isoformat()
+            parsed = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=ZoneInfo("America/Bogota"))
+            ts = parsed.isoformat()
         except Exception:
-            ts = datetime.now().isoformat()
+            ts = colombia_now().isoformat()
 
         if event == "Connect":
             self._on_connect(conn_id, content, ts)

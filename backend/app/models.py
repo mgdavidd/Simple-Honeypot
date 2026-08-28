@@ -1,12 +1,12 @@
-from sqlalchemy import Column, String, Integer, DateTime, JSON, Boolean, Text, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, JSON, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import Optional
 
 from enum import Enum
 
 from .database import Base
+from .time_utils import colombia_now
 
 class ServiceType(str, Enum):
     SSH = "ssh"
@@ -31,8 +31,8 @@ class Container(Base):
     
     docker_container_id = Column(String, nullable=True)  # ID real del container
     
-    created_at = Column(DateTime, default=lambda: datetime.now())
-    destroyed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=colombia_now)
+    destroyed_at = Column(DateTime(timezone=True), nullable=True)
     
     config = Column(JSON, default={})
     
@@ -57,8 +57,8 @@ class SSHSession(Base):
     credentials_tried = Column(JSON, default=[])
     commands = Column(JSON, default=[])
     
-    session_start = Column(DateTime)
-    session_end = Column(DateTime)
+    session_start = Column(DateTime(timezone=True))
+    session_end = Column(DateTime(timezone=True))
     
     container = relationship("Container", back_populates="ssh_sessions")
 
@@ -84,11 +84,21 @@ class HTTPRequest(Base):
     login_success = Column(Boolean, default=False)
     
     form_data = Column(JSON, default={})
-    
+
+    # Etiqueta semántica de la acción realizada dentro del honeypot.
+    # Ejemplos: wp_save_post, wp_delete_user, pma_sql_select, pma_insert_row
+    # None en page_view y login_attempt (ya tienen contexto propio).
+    action_label = Column(String, nullable=True)
+
+    # Detalle estructurado de la acción: campos relevantes según action_label.
+    # Ejemplo wp_save_post:  {"post_id": 4, "title": "...", "content_preview": "..."}
+    # Ejemplo pma_sql_select: {"db": "wordpress", "sql": "SELECT ...", "rows_returned": 3}
+    body = Column(JSON, nullable=True)
+
     status_code = Column(Integer)
     response_size = Column(Integer, nullable=True)
-    
-    timestamp = Column(DateTime, default=datetime.now())
+
+    timestamp = Column(DateTime(timezone=True), default=colombia_now)
     container = relationship("Container", back_populates="http_requests")
 
 
@@ -105,7 +115,7 @@ class MySQLQuery(Base):
     sqli_pattern = Column(String)
     detected_tool = Column(String)
     template_name = Column(String)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime(timezone=True), default=colombia_now)
 
     container = relationship("Container", back_populates="mysql_queries")
 
@@ -118,7 +128,7 @@ class BruteForceAlert(Base):
     
     ip = Column(String)
     service_type = Column(String, nullable=False)  # "ssh", "http", "mysql"
-    detected_at = Column(DateTime, default=lambda: datetime.now())
+    detected_at = Column(DateTime(timezone=True), default=colombia_now)
     total_attempts = Column(Integer)
     credentials_tried = Column(JSON, default=[])
     action = Column(String)  # "blocked_600s", etc
@@ -136,7 +146,7 @@ class SSHUserCredential(BaseModel):
 class ServiceConfigSSH(BaseModel):
     ban_seconds: int = 600
     failed_threshold: int = 20
-    users: Optional[list[SSHUserCredential]] = None  # None = usar users.txt del build
+    users: list[SSHUserCredential] | None = None  # None = usar users.txt del build
 
 
 class ServiceConfigHTTP(BaseModel):
@@ -201,16 +211,18 @@ class HTTPRequestResponse(BaseModel):
     id: int
     container_id: str
     request_type: str
-    method: Optional[str] = None
-    path: Optional[str] = None
-    user_agent: Optional[str] = None
+    method: str | None = None
+    path: str | None = None
+    user_agent: str | None = None
     ip: str
-    username: Optional[str] = None
-    password: Optional[str] = None
+    username: str | None = None
+    password: str | None = None
     login_success: bool
     form_data: dict
-    status_code: Optional[int] = None
-    response_size: Optional[int] = None
+    action_label: str | None = None
+    body: dict | None = None
+    status_code: int | None = None
+    response_size: int | None = None
     timestamp: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -219,14 +231,14 @@ class HTTPRequestResponse(BaseModel):
 class MySQLQueryResponse(BaseModel):
     id: int
     container_id: str
-    ip: Optional[str] = None
-    username: Optional[str] = None
-    database_name: Optional[str] = None
-    query: Optional[str] = None
-    query_type: Optional[str] = None
-    sqli_pattern: Optional[str] = None
-    detected_tool: Optional[str] = None
-    template_name: Optional[str] = None
+    ip: str | None = None
+    username: str | None = None
+    database_name: str | None = None
+    query: str | None = None
+    query_type: str | None = None
+    sqli_pattern: str | None = None
+    detected_tool: str | None = None
+    template_name: str | None = None
     timestamp: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -252,8 +264,8 @@ class AdminUser(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.now())
-    last_login = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=colombia_now)
+    last_login = Column(DateTime(timezone=True), nullable=True)
 
 
 # Schemas Pydantic

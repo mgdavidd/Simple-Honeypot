@@ -1,0 +1,105 @@
+{% extends "pma_base.html" %}
+{% set active_tab = 'users' %}
+{% block title %}User Accounts{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/phpmyadmin/sql.php">localhost</a> &#8250; User accounts
+</div>
+
+<div class="page-content">
+  <h2 style="font-size:14px; margin:0 0 12px;">User accounts overview</h2>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Hostname</th>
+        <th>Password</th>
+        <th>Global privileges</th>
+        <th>Grant</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if users %}
+        {% for row in users.rows %}
+        <tr>
+          <td><strong>{{ row[1] if row|length > 1 else 'unknown' }}</strong></td>
+          <td>{{ row[0] if row|length > 0 else 'localhost' }}</td>
+          <td>
+            {% if row[2] and row[2]|length > 0 %}
+            <span class="icon-ok">Yes</span>
+            {% else %}
+            <span class="icon-err">No</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row[1] == 'root' %}ALL PRIVILEGES
+            {% elif row[1] == 'honeypot' %}SELECT, INSERT, UPDATE, DELETE, CREATE, DROP
+            {% else %}USAGE{% endif %}
+          </td>
+          <td>
+            {% if row[1] == 'root' %}<span class="icon-ok">Yes</span>
+            {% else %}<span class="icon-err">No</span>{% endif %}
+          </td>
+          <td style="white-space:nowrap; font-size:11px;">
+            <a href="#" class="btn btn-sm">Edit privileges</a>
+            {% if row[1] != 'root' %}
+            <a href="#" class="btn btn-sm btn-danger">Drop</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr><td colspan="6" style="color:#888; font-style:italic; padding:20px; text-align:center;">No user data available.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <hr style="margin:16px 0; border:none; border-top:1px solid #eee;">
+
+  <h3 style="font-size:13px; margin:0 0 10px;">Add user account</h3>
+  <form method="POST" action="/phpmyadmin/sql.php">
+    <input type="hidden" name="db" value="mysql">
+    <table class="form-table" style="width:auto; border-collapse:collapse;">
+      <tr>
+        <td style="padding:4px 8px; font-size:12px; font-weight:bold;">User name:</td>
+        <td style="padding:4px 8px;">
+          <select name="pred_username" style="font-size:12px;">
+            <option value="any">Any user</option>
+            <option value="userdefined" selected>Use text field:</option>
+          </select>
+          <input type="text" name="username" style="width:140px;" placeholder="new_user">
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 8px; font-size:12px; font-weight:bold;">Host name:</td>
+        <td style="padding:4px 8px;">
+          <select name="pred_hostname" style="font-size:12px;">
+            <option value="any">Any host</option>
+            <option value="localhost" selected>Local</option>
+            <option value="userdefined">Use text field:</option>
+          </select>
+          <input type="text" name="hostname" value="localhost" style="width:140px;">
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 8px; font-size:12px; font-weight:bold;">Password:</td>
+        <td style="padding:4px 8px;">
+          <input type="password" name="password" style="width:160px;">
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 8px; font-size:12px; font-weight:bold;">Re-type:</td>
+        <td style="padding:4px 8px;">
+          <input type="password" name="password2" style="width:160px;">
+        </td>
+      </tr>
+    </table>
+    <p style="margin-top:8px;">
+      <input type="submit" class="btn btn-primary" value="Go">
+    </p>
+  </form>
+</div>
+{% endblock %}

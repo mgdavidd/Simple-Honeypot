@@ -73,6 +73,26 @@ def build_image(name, context, dockerfile, tag, rebuild=False, no_cache=False):
     run_command(cmd, f"Construyendo {name} (etiqueta {tag})")
 
 
+def purge_honeypot_resources():
+    """Elimina contenedores dinámicos y volúmenes gestionados por el proyecto."""
+    container_ids, _, rc = run_command(
+        "docker ps -aq --filter label=honeypot.manager=true",
+        "Buscando contenedores dinámicos del honeypot",
+        capture_output=True,
+    )
+    if rc == 0 and container_ids:
+        run_command(
+            f"docker rm -f -v {container_ids}",
+            "Eliminando contenedores dinámicos y sus volúmenes anónimos",
+        )
+
+    run_command(
+        "docker volume rm http-data-1 http-data-2",
+        "Eliminando volúmenes nombrados de los honeypots HTTP",
+        capture_output=True,
+    )
+
+
 def main():
     import argparse
 
@@ -120,6 +140,8 @@ def main():
             cmd += " -v"  # elimina volúmenes
         print(f"\n=== Ejecutando: {cmd} ===")
         run_command(cmd, "Deteniendo y eliminando servicios")
+        if args.purge:
+            purge_honeypot_resources()
         print("\n✓ Stack detenido" + (" y volúmenes eliminados." if args.purge else "."))
         return
 

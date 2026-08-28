@@ -1,0 +1,106 @@
+{% extends "pma_base.html" %}
+{% set active_tab = 'structure' %}
+{% block title %}Structure — {{ current_db }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/phpmyadmin/sql.php">localhost</a> &#8250;
+  <strong>{{ current_db }}</strong> &#8250; Structure
+</div>
+
+<div class="page-tabs">
+  <a href="/phpmyadmin/db_structure.php?db={{ current_db }}" class="active">Structure</a>
+  <a href="/phpmyadmin/sql.php?db={{ current_db }}">SQL</a>
+  <a href="/phpmyadmin/server_status.php">Search</a>
+</div>
+
+<div class="page-content">
+  <p style="font-size:12px; color:#555; margin:0 0 10px;">
+    Database: <strong>{{ current_db }}</strong>
+    &mdash; {{ tables_info|length }} table(s)
+  </p>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th><input type="checkbox"></th>
+        <th>Table</th>
+        <th>Action</th>
+        <th>Rows</th>
+        <th>Type</th>
+        <th>Collation</th>
+        <th>Size</th>
+        <th>Overhead</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tables_info %}
+      <tr>
+        <td><input type="checkbox" value="{{ t.name }}"></td>
+        <td>
+          <a href="/phpmyadmin/tbl_browse.php?db={{ current_db }}&table={{ t.name }}"
+             style="font-weight:bold;">{{ t.name }}</a>
+        </td>
+        <td style="white-space:nowrap; font-size:11px;">
+          <a href="/phpmyadmin/tbl_browse.php?db={{ current_db }}&table={{ t.name }}" title="Browse">&#128269;</a>
+          <a href="/phpmyadmin/tbl_structure.php?db={{ current_db }}&table={{ t.name }}" title="Structure">&#128196;</a>
+          <a href="/phpmyadmin/sql.php?db={{ current_db }}&table={{ t.name }}" title="SQL">SQL</a>
+          <a href="/phpmyadmin/tbl_change.php?db={{ current_db }}&table={{ t.name }}" title="Insert">&#43;</a>
+        </td>
+        <td style="text-align:right;">{{ t.rows }}</td>
+        <td>{{ t.engine }}</td>
+        <td>{{ t.collation }}</td>
+        <td style="text-align:right;">{{ t.size }}</td>
+        <td style="text-align:right; color:#aaa;">—</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" style="text-align:center; color:#888; padding:20px; font-style:italic;">
+          No tables found in this database.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    {% if tables_info %}
+    <tfoot>
+      <tr style="font-weight:bold; background:#f0f0f8;">
+        <td></td>
+        <td>{{ tables_info|length }} table(s)</td>
+        <td></td>
+        <td style="text-align:right;">{{ tables_info|sum(attribute='rows') }}</td>
+        <td></td>
+        <td>utf8mb4_unicode_ci</td>
+        <td style="text-align:right;">—</td>
+        <td></td>
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+
+  <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="#" class="btn btn-sm">Check all</a>
+    <a href="#" class="btn btn-sm">Uncheck all</a>
+    <span style="font-size:12px; color:#555;">With selected:</span>
+    <select class="btn btn-sm" style="padding:2px 4px;">
+      <option>Browse</option>
+      <option>Select</option>
+      <option>Analyze table</option>
+      <option>Optimize table</option>
+      <option>Repair table</option>
+      <option>Check table</option>
+      <option>Drop</option>
+      <option>Empty</option>
+    </select>
+  </div>
+
+  <hr style="margin:16px 0; border:none; border-top:1px solid #eee;">
+
+  <p style="font-size:12px; font-weight:bold; margin:0 0 8px;">Create table</p>
+  <form method="POST" action="/phpmyadmin/sql.php" style="display:flex; gap:8px; align-items:center;">
+    <input type="hidden" name="db" value="{{ current_db }}">
+    <label style="font-size:12px;">Name: <input type="text" name="table_name" style="width:160px;"></label>
+    <label style="font-size:12px;">Columns: <input type="number" name="num_fields" value="4" style="width:50px;"></label>
+    <input type="submit" class="btn" value="Go">
+  </form>
+</div>
+{% endblock %}

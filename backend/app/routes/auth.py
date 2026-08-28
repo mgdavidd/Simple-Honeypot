@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
 from sqlalchemy.orm import Session
-from datetime import datetime
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
@@ -10,6 +9,7 @@ load_dotenv()
 
 from ..database import get_db
 from ..models import AdminUser, AdminUserCreate, AdminUserResponse
+from ..time_utils import colombia_now
 from ..auth import (
     hash_password,
     verify_password,
@@ -123,7 +123,7 @@ def login(credentials: LoginRequest, response: Response, db: Session = Depends(g
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    user.last_login = datetime.now()
+    user.last_login = colombia_now()
     db.commit()
     
     access_token = create_access_token({"sub": user.username})

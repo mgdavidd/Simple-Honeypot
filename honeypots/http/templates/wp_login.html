@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Log In &lsaquo; WordPress &#8212; WordPress</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width">
+<style>
+* { box-sizing: border-box; }
+html { height: 100%; }
+body {
+  background: #f0f0f1;
+  color: #3c434a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+#login {
+  width: 320px;
+  padding: 26px;
+  margin: 7% auto 0;
+}
+#login h1 a {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Ccircle cx='60' cy='60' r='60' fill='%2300749c'/%3E%3Ctext x='60' y='80' text-anchor='middle' font-size='72' fill='white' font-family='Georgia,serif' font-weight='bold'%3EW%3C/text%3E%3C/svg%3E");
+  background-size: 84px;
+  background-repeat: no-repeat;
+  background-position: center top;
+  display: block;
+  height: 84px;
+  width: 84px;
+  margin: 0 auto 16px;
+  overflow: hidden;
+  text-indent: -9999px;
+}
+.login h1 a { border: none; outline: none; }
+#loginform, .login form {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  padding: 26px 24px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+#login .message, #login .notice {
+  border-left: 4px solid #72aee6;
+  background: #fff;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.login label {
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 3px;
+  color: #3c434a;
+}
+.login .input, .login input[type="text"], .login input[type="password"] {
+  background-color: #fff;
+  border: 1px solid #8c8f94;
+  border-radius: 3px;
+  color: #2c3338;
+  font-size: 20px;
+  font-family: inherit;
+  padding: 3px 10px;
+  width: 100%;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  min-height: 40px;
+  display: block;
+}
+.login .input:focus, .login input[type="text"]:focus, .login input[type="password"]:focus {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+  outline: 2px solid transparent;
+}
+.login .forgetmenot {
+  float: left;
+  margin-bottom: 0;
+  font-weight: 400;
+}
+.login .forgetmenot label { font-weight: 400; font-size: 13px; }
+input[type="checkbox"] { margin: 0 4px 0 0; }
+.login .submit {
+  float: right;
+  padding: 0;
+  margin: 0;
+}
+.login input[type="submit"], #wp-submit {
+  background: #2271b1;
+  border-color: #2271b1;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 2.15384615;
+  padding: 0 10px;
+  cursor: pointer;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 3px;
+  white-space: nowrap;
+  -webkit-appearance: none;
+  min-height: 30px;
+}
+.login input[type="submit"]:hover, #wp-submit:hover {
+  background: #135e96;
+  border-color: #135e96;
+}
+#nav, #backtoblog {
+  margin: 0 0 0 0;
+  padding: 16px 24px;
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-top: none;
+  font-size: 13px;
+  line-height: 1.5;
+}
+#nav a, #backtoblog a {
+  color: #50575e;
+  text-decoration: none;
+}
+#nav a:hover, #backtoblog a:hover { color: #2271b1; }
+#backtoblog { border-top: 1px solid #c3c4c7; margin-top: -1px; }
+.wp-die-message {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-left: 4px solid #d63638;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #d63638;
+}
+.login #login_error {
+  border-left: 4px solid #d63638;
+  background: #fff;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+#login p.submit { clear: both; margin: 0; padding: 0; }
+.clearfix::after { content: ""; display: block; clear: both; }
+@media (max-height: 550px) { #login { margin-top: 20px; } }
+</style>
+</head>
+<body class="login no-js login-action-{{ action }} wp-core-ui locale-en-us">
+<div id="login">
+  <h1><a href="https://wordpress.org/" title="Powered by WordPress" tabindex="-1">WordPress</a></h1>
+
+  {% if error %}
+  <div id="login_error">{{ error|safe }}</div>
+  {% endif %}
+
+  {% if request.args.get('loggedout') %}
+  <div class="message">You are now logged out.</div>
+  {% endif %}
+
+  {% if request.args.get('reauth') %}
+  <div class="message">Please log in again.</div>
+  {% endif %}
+
+  <form name="loginform" id="loginform" action="/wp-login.php" method="post">
+    <p>
+      <label for="user_login">Username or Email Address</label>
+      <input type="text" name="log" id="user_login" class="input" value="" size="20" autocapitalize="none" autocomplete="username" />
+    </p>
+    <div class="user-pass-wrap">
+      <label for="user_pass">Password</label>
+      <div class="wp-pwd">
+        <input type="password" name="pwd" id="user_pass" class="input password-input" value="" size="20" autocomplete="current-password" />
+      </div>
+    </div>
+    <p class="forgetmenot clearfix">
+      <label for="rememberme">
+        <input name="rememberme" type="checkbox" id="rememberme" value="forever">
+        Remember Me
+      </label>
+      <input type="submit" name="wp-submit" id="wp-submit" class="button button-primary button-large" value="Log In" />
+    </p>
+    <input type="hidden" name="redirect_to" value="{{ redirect_to }}">
+    <input type="hidden" name="testcookie" value="1">
+  </form>
+
+  <p id="nav">
+    <a href="/wp-login.php?action=lostpassword">Lost your password?</a>
+  </p>
+
+  <p id="backtoblog">
+    <a href="/">&#8592; Go to site</a>
+  </p>
+</div>
+</body>
+</html>

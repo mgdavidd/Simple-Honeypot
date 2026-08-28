@@ -1,0 +1,89 @@
+{% extends "wp_admin_base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <h1>Dashboard</h1>
+
+  {% if request.args.get('updated') %}
+  <div class="notice notice-success"><p>Settings saved.</p></div>
+  {% endif %}
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+    <!-- At a Glance -->
+    <div class="postbox">
+      <h2>At a Glance</h2>
+      <div class="inside">
+        <ul style="list-style:none; padding:0; margin:0;">
+          <li style="padding:4px 0; border-bottom:1px solid #f0f0f1;">
+            <a href="/wp-admin/edit.php" style="font-weight:600;">{{ posts|selectattr('status','eq','publish')|list|length }} Posts</a>
+          </li>
+          <li style="padding:4px 0; border-bottom:1px solid #f0f0f1;">
+            <a href="/wp-admin/edit.php?post_type=page" style="font-weight:600;">{{ posts|selectattr('status','eq','publish')|list|length }} Pages</a>
+          </li>
+          <li style="padding:4px 0; border-bottom:1px solid #f0f0f1;">
+            <span style="font-weight:600;">{{ users|length }} Users</span>
+          </li>
+          <li style="padding:4px 0;">
+            <span style="font-weight:600;">1 Comment</span>
+          </li>
+        </ul>
+        <p style="margin-top:12px; color:#646970;">
+          WordPress 6.7.1 running <a href="#">Twenty Twenty-Four</a> theme.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Draft -->
+    <div class="postbox">
+      <h2>Quick Draft</h2>
+      <div class="inside">
+        <form method="POST" action="/wp-admin/post.php">
+          <input type="hidden" name="action" value="post-quickdraft-save">
+          <p>
+            <label for="title" style="font-weight:600; display:block; margin-bottom:4px;">Title</label>
+            <input type="text" name="post_title" id="title" style="width:100%;" placeholder="Post title">
+          </p>
+          <p>
+            <label for="content" style="font-weight:600; display:block; margin-bottom:4px;">What's on your mind?</label>
+            <textarea name="content" id="content" rows="3" style="width:100%;"></textarea>
+          </p>
+          <input type="hidden" name="post_status" value="draft">
+          <p><input type="submit" class="button button-primary" value="Save Draft"></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="postbox">
+      <h2>Activity</h2>
+      <div class="inside">
+        <h4 style="margin:0 0 8px; font-size:12px; font-weight:600; text-transform:uppercase; color:#646970; letter-spacing:.5px;">Recently Published</h4>
+        {% for post in posts if post.status == 'publish' %}
+        <p>
+          <span style="color:#646970; font-size:12px;">{{ post.date[:10] }}</span>
+          &mdash;
+          <a href="/wp-admin/post.php?post={{ post.id }}&action=edit">{{ post.title }}</a>
+        </p>
+        {% endfor %}
+        <hr style="margin:12px 0; border:none; border-top:1px solid #f0f0f1;">
+        <h4 style="margin:0 0 8px; font-size:12px; font-weight:600; text-transform:uppercase; color:#646970; letter-spacing:.5px;">Comments in Moderation</h4>
+        <p><a href="#">1 Comment</a> — <a href="#">Hello world!</a> <span style="color:#646970; font-size:12px;">by A WordPress Commenter</span></p>
+      </div>
+    </div>
+
+    <!-- WordPress Events -->
+    <div class="postbox">
+      <h2>WordPress Events and News</h2>
+      <div class="inside">
+        <p><strong>WordPress 6.7.1</strong> — Maintenance release fixing 10 bugs. <a href="#">Release Notes</a></p>
+        <p><strong>WP Briefing: Episode 89</strong> — The Blueprint for Big Blocks. <a href="#">Listen Now</a></p>
+        <p><a href="https://wordpress.org/news/">WordPress News &raquo;</a></p>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% set active_menu = 'dashboard' %}
+{% endblock %}

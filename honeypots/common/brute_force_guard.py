@@ -1,9 +1,8 @@
 import threading
 import os
-from datetime import datetime
-
 from .log_client import send_bruteforce_alert
 from .ip_blocker import IPBlocker
+from .time_utils import colombia_now
 
 
 class BruteForceGuard:
@@ -52,7 +51,7 @@ class BruteForceGuard:
             total_attempts=len(attempts),
             credentials_tried=attempts,
             action=f"blocked_{self.BAN_SECONDS}s",
-            detected_at=datetime.now().isoformat()
+            detected_at=colombia_now().isoformat()
         )
 
         print(f"[brute-force] ({self.service_id}) Umbral alcanzado para {ip}: {len(attempts)} intentos. Bloqueando {self.BAN_SECONDS}s.")

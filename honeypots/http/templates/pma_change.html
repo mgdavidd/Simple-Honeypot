@@ -1,0 +1,94 @@
+{% extends "pma_base.html" %}
+{% set active_tab = 'change' %}
+{% block title %}Insert — {{ current_table }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/phpmyadmin/sql.php">localhost</a> &#8250;
+  <a href="/phpmyadmin/db_structure.php?db={{ current_db }}">{{ current_db }}</a> &#8250;
+  <a href="/phpmyadmin/tbl_browse.php?db={{ current_db }}&table={{ current_table }}">{{ current_table }}</a> &#8250; Insert
+</div>
+
+<div class="page-tabs">
+  <a href="/phpmyadmin/tbl_browse.php?db={{ current_db }}&table={{ current_table }}">Browse</a>
+  <a href="/phpmyadmin/tbl_structure.php?db={{ current_db }}&table={{ current_table }}">Structure</a>
+  <a href="/phpmyadmin/sql.php?db={{ current_db }}&table={{ current_table }}">SQL</a>
+  <a href="/phpmyadmin/tbl_change.php?db={{ current_db }}&table={{ current_table }}" class="active">Insert</a>
+</div>
+
+<div class="page-content">
+{% if not table_data %}
+  <div class="result-error">Table not found.</div>
+{% else %}
+  <form method="POST" action="/phpmyadmin/tbl_change.php">
+    <input type="hidden" name="db" value="{{ current_db }}">
+    <input type="hidden" name="table" value="{{ current_table }}">
+    <input type="hidden" name="token" value="abc123">
+    <input type="hidden" name="submit_type" value="insertrow">
+
+    <table class="table" style="width:auto; min-width:600px;">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Type</th>
+          <th>Function</th>
+          <th>Null</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for col in table_data.columns %}
+        <tr>
+          <td><strong>{{ col }}</strong></td>
+          <td style="color:#777; font-size:11px;">
+            {% if loop.index == 1 %}int(11) AUTO_INCREMENT
+            {% elif 'email' in col.lower() %}varchar(100)
+            {% elif 'date' in col.lower() or 'time' in col.lower() %}datetime
+            {% elif 'pass' in col.lower() or 'hash' in col.lower() %}varchar(255)
+            {% elif 'content' in col.lower() or 'text' in col.lower() %}longtext
+            {% else %}varchar(255)
+            {% endif %}
+          </td>
+          <td>
+            <select name="funcs[{{ col }}]" style="font-size:11px;">
+              <option value=""></option>
+              <option>MD5</option>
+              <option>PASSWORD</option>
+              <option>NOW</option>
+              <option>UNIX_TIMESTAMP</option>
+              <option>UUID</option>
+            </select>
+          </td>
+          <td style="text-align:center;">
+            <input type="checkbox" name="fields_null[{{ col }}]" value="NULL">
+          </td>
+          <td>
+            {% if 'content' in col.lower() or 'text' in col.lower() %}
+            <textarea name="fields_value[{{ col }}]" rows="3" style="width:300px; font-size:12px;"></textarea>
+            {% elif loop.index == 1 %}
+            <input type="text" name="fields_value[{{ col }}]" value="" placeholder="AUTO" style="width:80px;" readonly>
+            {% else %}
+            <input type="text" name="fields_value[{{ col }}]" value="" style="width:200px;">
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+      <input type="submit" class="btn btn-primary" value="Go">
+      <label style="font-size:12px;">
+        <input type="radio" name="after_insert" value="back" checked> Back to previous page
+      </label>
+      <label style="font-size:12px;">
+        <input type="radio" name="after_insert" value="new_insert"> Insert another new row
+      </label>
+      <label style="font-size:12px;">
+        <input type="radio" name="after_insert" value="edit_next"> Edit next row
+      </label>
+    </div>
+  </form>
+{% endif %}
+</div>
+{% endblock %}

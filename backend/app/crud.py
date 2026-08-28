@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone
+from .time_utils import colombia_now
 
 from .models import Container, SSHSession, HTTPRequest, MySQLQuery, BruteForceAlert
 from .models import ServiceCreate, ContainerResponse, ServiceUpdate
@@ -94,7 +94,7 @@ class ContainerCRUD:
             return None
 
         container.status = "destroyed"
-        container.destroyed_at = datetime.now()
+        container.destroyed_at = colombia_now()
         container.docker_container_id = None
 
         db.commit()

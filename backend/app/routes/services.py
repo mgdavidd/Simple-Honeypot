@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
-
 from ..database import get_db
 from ..models import AdminUser, Container
 from ..auth import get_current_user_from_cookie
+from ..time_utils import colombia_now
 
 router = APIRouter()
 def _validate_ssh_users(users_raw: str) -> list:
@@ -289,7 +288,11 @@ def reconfigure_service(
         if container.docker_container_id:
             existing_container = docker_mgr.get(container.docker_container_id)
             if existing_container is not None:
-                docker_mgr.destroy_container(container.docker_container_id)
+                docker_mgr.destroy_container(
+                    container.docker_container_id,
+                    service_type=container.type,
+                    replica_id=container.replica_id,
+                )
             else:
                 # El contenedor ya no existe, limpiar el ID en BD
                 container.docker_container_id = None
@@ -342,8 +345,12 @@ def stop_service(
             container.status = "paused"
             action = "paused"
         else:
-            docker_mgr.destroy_container(container.docker_container_id)
-            container.destroyed_at = datetime.now()
+            docker_mgr.destroy_container(
+                container.docker_container_id,
+                service_type=container.type,
+                replica_id=container.replica_id,
+            )
+            container.destroyed_at = colombia_now()
             container.status = "destroyed"
             container.docker_container_id = None
             action = "destroyed"
@@ -423,7 +430,11 @@ def delete_service(
     try:
         if container.docker_container_id:
             try:
-                get_docker_manager().destroy_container(container.docker_container_id)
+                get_docker_manager().destroy_container(
+                    container.docker_container_id,
+                    service_type=container.type,
+                    replica_id=container.replica_id,
+                )
             except Exception as e:
                 print(f"[api] Warning destroying container: {e}")
 
@@ -431,7 +442,7 @@ def delete_service(
             db.delete(container)
         else:
             container.status = "destroyed"
-            container.destroyed_at = datetime.now()
+            container.destroyed_at = colombia_now()
             container.docker_container_id = None
         db.commit()
         return {"status": "ok"}

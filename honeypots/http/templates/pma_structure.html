@@ -1,0 +1,108 @@
+{% extends "pma_base.html" %}
+{% set active_tab = 'structure' %}
+{% block title %}Structure — {{ current_table }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/phpmyadmin/sql.php">localhost</a> &#8250;
+  <a href="/phpmyadmin/db_structure.php?db={{ current_db }}">{{ current_db }}</a> &#8250;
+  <strong>{{ current_table }}</strong> &#8250; Structure
+</div>
+
+<div class="page-tabs">
+  <a href="/phpmyadmin/tbl_browse.php?db={{ current_db }}&table={{ current_table }}">Browse</a>
+  <a href="/phpmyadmin/tbl_structure.php?db={{ current_db }}&table={{ current_table }}" class="active">Structure</a>
+  <a href="/phpmyadmin/sql.php?db={{ current_db }}&table={{ current_table }}">SQL</a>
+  <a href="/phpmyadmin/tbl_change.php?db={{ current_db }}&table={{ current_table }}">Insert</a>
+</div>
+
+<div class="page-content">
+{% if not table_data %}
+  <div class="result-error">Table not found.</div>
+{% else %}
+  <p style="font-size:12px; color:#555; margin:0 0 10px;">
+    Table structure for table <strong>`{{ current_table }}`</strong>
+    &mdash; Engine: {{ table_data.engine }}
+    &mdash; Collation: {{ table_data.collation }}
+    &mdash; Size: {{ table_data.size }}
+  </p>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th><input type="checkbox"></th>
+        <th>#</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Collation</th>
+        <th>Attributes</th>
+        <th>Null</th>
+        <th>Default</th>
+        <th>Extra</th>
+        <th colspan="3">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for col in table_data.columns %}
+      <tr>
+        <td><input type="checkbox" value="{{ loop.index0 }}"></td>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ col }}</strong></td>
+        <td>
+          {% if loop.index == 1 %}int(11)
+          {% elif 'email' in col.lower() %}varchar(100)
+          {% elif 'date' in col.lower() or 'time' in col.lower() %}datetime
+          {% elif 'pass' in col.lower() or 'hash' in col.lower() %}varchar(255)
+          {% elif 'content' in col.lower() or 'text' in col.lower() %}longtext
+          {% elif 'status' in col.lower() or 'type' in col.lower() %}varchar(20)
+          {% else %}varchar(255)
+          {% endif %}
+        </td>
+        <td>
+          {% if 'pass' in col.lower() or loop.index == 1 %}—
+          {% else %}utf8mb4_unicode_ci{% endif %}
+        </td>
+        <td></td>
+        <td>{% if loop.index == 1 %}No{% else %}Yes{% endif %}</td>
+        <td>{% if loop.index == 1 %}None{% else %}NULL{% endif %}</td>
+        <td>{% if loop.index == 1 %}AUTO_INCREMENT{% endif %}</td>
+        <td><a href="#" style="font-size:11px;">Change</a></td>
+        <td><a href="#" style="font-size:11px; color:#c00;">Drop</a></td>
+        <td><a href="#" style="font-size:11px;">More &#9660;</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <a href="#" class="btn btn-sm">&#10010; Add column</a>
+    <a href="#" class="btn btn-sm">Print</a>
+    <a href="/phpmyadmin/sql.php?db={{ current_db }}&table={{ current_table }}" class="btn btn-sm">Browse distinct values</a>
+  </div>
+
+  <hr style="margin:16px 0; border:none; border-top:1px solid #eee;">
+
+  <!-- Indexes -->
+  <p style="font-size:12px; font-weight:bold; margin:0 0 8px;">Indexes</p>
+  <table class="table" style="width:auto;">
+    <thead>
+      <tr><th>Keyname</th><th>Type</th><th>Unique</th><th>Packed</th><th>Column</th><th>Cardinality</th><th>Collation</th><th>Null</th><th>Comment</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>PRIMARY</td><td>BTREE</td><td>Yes</td><td>No</td>
+        <td><strong>{{ table_data.columns[0] if table_data.columns else 'id' }}</strong></td>
+        <td>{{ table_data.rows|length }}</td><td>A</td><td>No</td><td></td>
+      </tr>
+      {% if table_data.columns|length > 1 %}
+      <tr>
+        <td>{{ table_data.columns[1] }}_idx</td><td>BTREE</td><td>No</td><td>No</td>
+        <td>{{ table_data.columns[1] }}</td>
+        <td>{{ table_data.rows|length }}</td><td>A</td><td>Yes</td><td></td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+{% endif %}
+</div>
+{% endblock %}

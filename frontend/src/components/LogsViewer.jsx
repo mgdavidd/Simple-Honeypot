@@ -29,6 +29,178 @@ const TOOL_OPTIONS = [
   { value: 'manual', label: 'Manual' },
 ]
 
+// ── ActionBody: renderiza el body de cada action_label de forma legible ──────
+function ActionBody({ label, body }) {
+  if (!body || Object.keys(body).length === 0) return null
+
+  // WordPress: guardó post
+  if (label === 'wp_save_post') return (
+    <div className="body-detail">
+      {body.post_id    && <p>🆔 Post ID: <span className="highlight">#{body.post_id}</span></p>}
+      {body.title      && <p>📌 Título: <span className="highlight">{body.title}</span></p>}
+      {body.status     && <p>📄 Estado: <span className="highlight">{body.status}</span></p>}
+      {body.author     && <p>👤 Autor: <span className="highlight">{body.author}</span></p>}
+      {body.content_length !== undefined && (
+        <p>📏 Longitud contenido: <span className="highlight">{body.content_length} chars</span></p>
+      )}
+      {body.content_preview && (
+        <div className="body-preview">
+          <p className="preview-label">Vista previa:</p>
+          <p className="preview-text">{body.content_preview}</p>
+        </div>
+      )}
+    </div>
+  )
+
+  // WordPress: eliminó post
+  if (label === 'wp_delete_post') return (
+    <div className="body-detail">
+      {body.post_id && <p>🆔 Post eliminado: <span className="highlight">#{body.post_id}</span></p>}
+    </div>
+  )
+
+  // WordPress: creó usuario
+  if (label === 'wp_create_user') return (
+    <div className="body-detail">
+      {body.user_id  && <p>🆔 User ID: <span className="highlight">#{body.user_id}</span></p>}
+      {body.username && <p>👤 Username: <span className="highlight">{body.username}</span></p>}
+      {body.email    && <p>✉️ Email: <span className="highlight">{body.email}</span></p>}
+      {body.role     && <p>🎭 Rol: <span className="highlight">{body.role}</span></p>}
+      {body.name     && <p>📛 Nombre: <span className="highlight">{body.name}</span></p>}
+    </div>
+  )
+
+  // WordPress: eliminó usuario
+  if (label === 'wp_delete_user') return (
+    <div className="body-detail">
+      {body.user_id && <p>🆔 Usuario eliminado: <span className="highlight">#{body.user_id}</span></p>}
+    </div>
+  )
+
+  // WordPress: cambió settings
+  if (label === 'wp_save_options') return (
+    <div className="body-detail">
+      {body.count !== undefined && (
+        <p>🔢 Campos modificados: <span className="highlight">{body.count}</span></p>
+      )}
+      {body.fields_changed?.length > 0 && (
+        <p>🗝️ Campos: <span className="highlight">{body.fields_changed.join(', ')}</span></p>
+      )}
+      {body.values && Object.keys(body.values).length > 0 && (
+        <div className="body-kv">
+          {Object.entries(body.values).map(([k, v]) => (
+            <div key={k} className="kv-row">
+              <span className="kv-key">{k}</span>
+              <span className="kv-val">{String(v)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  // WordPress: XML-RPC
+  if (label === 'wp_xmlrpc_call') return (
+    <div className="body-detail">
+      {body.method_hint && <p>📡 Método: <span className="highlight">{body.method_hint}</span></p>}
+      {body.length      && <p>📏 Tamaño payload: <span className="highlight">{body.length} bytes</span></p>}
+      {body.raw         && (
+        <div className="body-preview">
+          <p className="preview-label">Payload (primeros 500 chars):</p>
+          <p className="preview-text">{body.raw}</p>
+        </div>
+      )}
+    </div>
+  )
+
+  // PMA: SQL query (select, insert, update, delete, drop, create, alter, show, describe)
+  if (label?.startsWith('pma_sql_')) return (
+    <div className="body-detail">
+      {body.db           && <p>🗄️ Base de datos: <span className="highlight">{body.db}</span></p>}
+      {body.sql          && (
+        <div className="body-preview">
+          <p className="preview-label">SQL ejecutado:</p>
+          <p className="preview-text sql-text">{body.sql}</p>
+        </div>
+      )}
+      {body.rows_returned !== undefined && (
+        <p>📊 Filas retornadas: <span className="highlight">{body.rows_returned}</span></p>
+      )}
+      {body.rows_affected !== undefined && body.rows_affected > 0 && (
+        <p>⚡ Filas afectadas: <span className="highlight">{body.rows_affected}</span></p>
+      )}
+      {body.columns?.length > 0 && (
+        <p>📋 Columnas: <span className="highlight">{body.columns.join(', ')}</span></p>
+      )}
+      {body.rows_preview?.length > 0 && (
+        <div className="rows-preview">
+          <p className="preview-label">Primeras filas:</p>
+          <div style={{overflowX:'auto'}}>
+            <table className="preview-table">
+              <thead>
+                <tr>{body.columns?.map(c => <th key={c}>{c}</th>)}</tr>
+              </thead>
+              <tbody>
+                {body.rows_preview.map((row, i) => (
+                  <tr key={i}>{(Array.isArray(row) ? row : [row]).map((cell, j) => (
+                    <td key={j}>{cell === null ? <em style={{color:'#666'}}>NULL</em> : String(cell)}</td>
+                  ))}</tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {body.error && <p className="body-error">⚠️ Error: <span>{body.error}</span></p>}
+    </div>
+  )
+
+  // PMA: insert row
+  if (label === 'pma_insert_row') return (
+    <div className="body-detail">
+      {body.table && <p>📋 Tabla: <span className="highlight">{body.table}</span></p>}
+      {body.row && Object.keys(body.row).length > 0 && (
+        <div className="body-kv">
+          {Object.entries(body.row).map(([k, v]) => (
+            <div key={k} className="kv-row">
+              <span className="kv-key">{k}</span>
+              <span className="kv-val">{v === '' ? <em style={{color:'#666'}}>vacío</em> : String(v)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  // PMA: delete row
+  if (label === 'pma_delete_row') return (
+    <div className="body-detail">
+      {body.table       && <p>📋 Tabla: <span className="highlight">{body.table}</span></p>}
+      {body.row_index !== undefined && <p>🔢 Índice fila: <span className="highlight">{body.row_index}</span></p>}
+      {body.deleted_row && Object.keys(body.deleted_row).length > 0 && (
+        <>
+          <p className="preview-label">Fila eliminada:</p>
+          <div className="body-kv">
+            {Object.entries(body.deleted_row).map(([k, v]) => (
+              <div key={k} className="kv-row">
+                <span className="kv-key">{k}</span>
+                <span className="kv-val">{v === null ? <em style={{color:'#666'}}>NULL</em> : String(v)}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+
+  // Fallback genérico: JSON legible
+  return (
+    <div className="body-detail">
+      <pre className="body-json">{JSON.stringify(body, null, 2)}</pre>
+    </div>
+  )
+}
+
 export default function LogsViewer({ serviceId, serviceName, onClose, api, onRefresh }) {
   const [tab, setTab] = useState('normal')
   const [logs, setLogs] = useState([])
@@ -105,6 +277,11 @@ export default function LogsViewer({ serviceId, serviceName, onClose, api, onRef
     if (log.auth_attempts > 0) return 'warning'
     if (log.sqli_pattern && log.sqli_pattern !== 'none') return 'danger'
     if (['drop', 'delete', 'update'].includes(log.query_type)) return 'warning'
+    // Acciones destructivas HTTP
+    if (['wp_delete_post','wp_delete_user','pma_delete_row','pma_sql_drop'].includes(log.action_label)) return 'danger'
+    if (['wp_create_user','pma_insert_row','pma_sql_insert'].includes(log.action_label)) return 'warning'
+    if (log.action_label && log.action_label.startsWith('pma_sql_')) return 'warning'
+    if (log.action_label) return 'default'
     return 'default'
   }
 
@@ -125,7 +302,36 @@ export default function LogsViewer({ serviceId, serviceName, onClose, api, onRef
 
     if (log.request_type === 'login_attempt') return log.login_success ? '✅ Login exitoso' : '❌ Login fallido'
     if (log.request_type === 'page_view')     return '🌐 Page View'
-    if (log.request_type)                     return `🌐 ${log.request_type}`
+
+    // Acciones WordPress con etiqueta semántica
+    const wpLabels = {
+      wp_save_post:    '📝 WP — Guardó post',
+      wp_delete_post:  '🗑️ WP — Eliminó post',
+      wp_create_user:  '👤 WP — Creó usuario',
+      wp_delete_user:  '🗑️ WP — Eliminó usuario',
+      wp_save_options: '⚙️ WP — Cambió settings',
+      wp_xmlrpc_call:  '📡 WP — XML-RPC call',
+    }
+    // Acciones phpMyAdmin
+    const pmaLabels = {
+      pma_sql_select:  '🔍 PMA — SQL SELECT',
+      pma_sql_insert:  '➕ PMA — SQL INSERT',
+      pma_sql_update:  '✏️ PMA — SQL UPDATE',
+      pma_sql_delete:  '🗑️ PMA — SQL DELETE',
+      pma_sql_drop:    '💥 PMA — SQL DROP',
+      pma_sql_create:  '🏗️ PMA — SQL CREATE',
+      pma_sql_alter:   '🔧 PMA — SQL ALTER',
+      pma_sql_show:    '📋 PMA — SQL SHOW',
+      pma_sql_describe:'📋 PMA — SQL DESCRIBE',
+      pma_sql_query:   '🗄️ PMA — SQL query',
+      pma_insert_row:  '➕ PMA — Insertó fila',
+      pma_delete_row:  '🗑️ PMA — Eliminó fila',
+    }
+    if (log.action_label && wpLabels[log.action_label])  return wpLabels[log.action_label]
+    if (log.action_label && pmaLabels[log.action_label]) return pmaLabels[log.action_label]
+    if (log.action_label) return `🔧 ${log.action_label}`
+
+    if (log.request_type) return `🌐 ${log.request_type}`
 
     if (log.commands !== undefined) return `🔌 SSH Session`
 
@@ -265,6 +471,17 @@ export default function LogsViewer({ serviceId, serviceName, onClose, api, onRef
                         {log.path && <p>🔗 Path: <span className="highlight">{log.path}</span></p>}
                         {log.status_code && <p>📊 Status: <span className="highlight">{log.status_code}</span></p>}
                       </>
+                    )}
+
+                    {/* ── Bloque de acciones HTTP con body semántico ── */}
+                    {log.action_label && log.body && (
+                      <div className="action-body">
+                        <p className="action-label-badge">
+                          🔖 <span className="highlight">{log.action_label}</span>
+                          {log.path && <span style={{color:'#8899aa', fontSize:'11px', marginLeft:'8px'}}>{log.path}</span>}
+                        </p>
+                        <ActionBody label={log.action_label} body={log.body} />
+                      </div>
                     )}
 
                     {log.total_attempts && (

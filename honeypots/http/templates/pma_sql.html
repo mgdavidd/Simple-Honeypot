@@ -1,0 +1,126 @@
+{% extends "pma_base.html" %}
+{% set active_tab = 'sql' %}
+{% block title %}SQL{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/phpmyadmin/sql.php">Server: localhost</a>
+  {% if current_db %}
+  &#8250; <a href="/phpmyadmin/db_structure.php?db={{ current_db }}">{{ current_db }}</a>
+  {% endif %}
+  {% if current_table %}
+  &#8250; <a href="/phpmyadmin/tbl_browse.php?db={{ current_db }}&table={{ current_table }}">{{ current_table }}</a>
+  {% endif %}
+  &#8250; SQL
+</div>
+
+<div class="page-tabs">
+  <a href="/phpmyadmin/db_structure.php?db={{ current_db }}">Structure</a>
+  <a href="/phpmyadmin/tbl_browse.php?db={{ current_db }}&table={{ current_table }}">Browse</a>
+  <a href="/phpmyadmin/sql.php?db={{ current_db }}&table={{ current_table }}" class="active">SQL</a>
+  <a href="/phpmyadmin/tbl_change.php?db={{ current_db }}&table={{ current_table }}">Insert</a>
+</div>
+
+<div class="page-content">
+
+  {% if result and result.error %}
+  <div class="result-error">
+    #1064 - You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '{{ result.sql[-30:] }}' at line 1
+  </div>
+  {% endif %}
+
+  {% if result and not result.error and result.type == 'select' %}
+  <div class="result-info">
+    Showing rows 0 - {{ [result.rows|length - 1, 0]|max }} ({{ result.rows|length }} total, Query took 0.0031 seconds.)
+    <span style="float:right; font-family: 'Courier New', monospace; font-size:11px; color:#555;">{{ result.sql }}</span>
+  </div>
+  {% endif %}
+
+  {% if result and not result.error and result.type in ['insert','update','delete','drop','create','alter','truncate'] %}
+  <div class="result-info">
+    &#10003; {{ result.affected }} row(s) affected. (Query took 0.0018 seconds.)
+  </div>
+  {% endif %}
+
+  {% if result and result.rows %}
+  <div style="overflow-x:auto; margin-bottom:16px;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:60px;">Actions</th>
+          {% for col in result.columns %}
+          <th>{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in result.rows %}
+        <tr>
+          <td class="row-actions">
+            <a href="#" title="Edit">&#9998;</a>
+            <a href="#" title="Copy">&#128203;</a>
+            <a href="#" title="Delete" style="color:#c00;">&#10006;</a>
+          </td>
+          {% for cell in row %}
+          <td title="{{ cell }}">
+            {% if cell is none or cell == '' %}
+            <span class="null-value">NULL</span>
+            {% else %}
+            {{ cell|string|truncate(60) }}
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- SQL Editor -->
+  <form method="POST" action="/phpmyadmin/sql.php">
+    <input type="hidden" name="db" value="{{ current_db }}">
+    <input type="hidden" name="table" value="{{ current_table }}">
+    <input type="hidden" name="token" value="abc123">
+
+    <p style="font-size:12px; font-weight:bold; margin:0 0 4px;">
+      Run SQL query/queries on server &ldquo;<strong>{{ current_db or 'localhost' }}</strong>&rdquo;:
+    </p>
+    <textarea name="sql_query" class="sql-box" rows="6"
+              placeholder="SELECT * FROM `wp_users` LIMIT 0, 25">{{ sql }}</textarea>
+
+    <div style="margin-top:8px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <input type="submit" class="btn btn-primary" value="Go">
+      <label style="font-size:12px;">
+        <input type="checkbox" name="show_query" value="1"> Retain query box
+      </label>
+      <label style="font-size:12px;">
+        <input type="checkbox" name="rollback_query"> Rollback when finished
+      </label>
+      <span style="margin-left:auto; font-size:11px; color:#888;">
+        Delimiter: <input type="text" name="sql_delimiter" value=";" style="width:30px; padding:1px 4px; font-size:11px;">
+      </span>
+    </div>
+  </form>
+
+  <!-- Bookmarked queries -->
+  <div style="margin-top:24px; border-top:1px solid #eee; padding-top:12px;">
+    <p style="font-size:12px; font-weight:bold; color:#555; margin:0 0 8px;">Bookmarked SQL queries</p>
+    <table class="table" style="width:auto;">
+      <tr>
+        <th>Label</th><th>Query</th><th>Actions</th>
+      </tr>
+      <tr>
+        <td>List all users</td>
+        <td><code>SELECT * FROM `wp_users`</code></td>
+        <td><a href="#" onclick="document.querySelector('textarea[name=sql_query]').value='SELECT * FROM \`wp_users\`'; return false;">Run</a></td>
+      </tr>
+      <tr>
+        <td>Show tables</td>
+        <td><code>SHOW TABLES</code></td>
+        <td><a href="#" onclick="document.querySelector('textarea[name=sql_query]').value='SHOW TABLES'; return false;">Run</a></td>
+      </tr>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "pma_base.html" %}
+{% set active_tab = 'browse' %}
+{% block title %}Browse — {{ current_table }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/phpmyadmin/sql.php">localhost</a> &#8250;
+  <a href="/phpmyadmin/db_structure.php?db={{ current_db }}">{{ current_db }}</a> &#8250;
+  <strong>{{ current_table }}</strong>
+</div>
+
+<div class="page-tabs">
+  <a href="/phpmyadmin/tbl_browse.php?db={{ current_db }}&table={{ current_table }}" class="active">Browse</a>
+  <a href="/phpmyadmin/tbl_structure.php?db={{ current_db }}&table={{ current_table }}">Structure</a>
+  <a href="/phpmyadmin/sql.php?db={{ current_db }}&table={{ current_table }}">SQL</a>
+  <a href="/phpmyadmin/tbl_change.php?db={{ current_db }}&table={{ current_table }}">Insert</a>
+  <a href="/phpmyadmin/tbl_select.php?db={{ current_db }}&table={{ current_table }}">Search</a>
+</div>
+
+<div class="page-content">
+
+{% if not table_data %}
+  <div class="result-error">Table `{{ current_table }}` not found in database `{{ current_db }}`.</div>
+{% else %}
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+    <div style="font-size:12px; color:#555;">
+      Showing rows 0 – {{ [table_data.rows|length - 1, 0]|max }}
+      ({{ table_data.rows|length }} total rows)
+      &nbsp;|&nbsp; Engine: {{ table_data.engine }}
+      &nbsp;|&nbsp; Collation: {{ table_data.collation }}
+    </div>
+    <div style="display:flex; gap:6px;">
+      <a href="/phpmyadmin/tbl_change.php?db={{ current_db }}&table={{ current_table }}" class="btn btn-sm">&#43; Insert row</a>
+      <a href="/phpmyadmin/sql.php?db={{ current_db }}&table={{ current_table }}" class="btn btn-sm">SQL</a>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <form method="POST" action="/phpmyadmin/tbl_delete_row.php">
+      <input type="hidden" name="db" value="{{ current_db }}">
+      <input type="hidden" name="table" value="{{ current_table }}">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:80px;">Actions</th>
+            {% for col in table_data.columns %}
+            <th>
+              <a href="?db={{ current_db }}&table={{ current_table }}&order={{ col }}"
+                 style="color:#333; text-decoration:none;">{{ col }} &#9662;</a>
+            </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in table_data.rows %}
+          <tr>
+            <td class="row-actions" style="white-space:nowrap;">
+              <a href="/phpmyadmin/tbl_change.php?db={{ current_db }}&table={{ current_table }}" title="Edit">&#9998;</a>
+              &nbsp;
+              <button type="submit" name="row_index" value="{{ loop.index0 }}"
+                      style="background:none; border:none; color:#c00; cursor:pointer; font-size:13px; padding:0;"
+                      title="Delete"
+                      onclick="return confirm('Are you sure you want to delete this row?')">&#10006;</button>
+            </td>
+            {% for cell in row %}
+            <td title="{{ cell }}">
+              {% if cell is none or cell == '' or cell == 'NULL' %}
+              <span class="null-value">NULL</span>
+              {% else %}
+              {{ cell|string|truncate(80) }}
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="{{ (table_data.columns|length) + 1 }}"
+                style="text-align:center; color:#888; padding:20px; font-style:italic;">
+              MySQL returned an empty result set (i.e., zero rows).
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </form>
+  </div>
+
+  <!-- Pagination -->
+  <div style="margin-top:8px; font-size:12px; color:#555; display:flex; gap:12px; align-items:center;">
+    <span>Page number: <input type="number" value="1" style="width:40px; font-size:12px; padding:1px 4px;"> of 1</span>
+    <span>Rows per page:
+      <select style="font-size:12px; padding:1px 4px;">
+        <option>25</option><option>50</option><option>100</option><option>250</option>
+      </select>
+    </span>
+    <a href="#" class="btn btn-sm">&#171; Begin</a>
+    <a href="#" class="btn btn-sm">&#8249; Previous</a>
+    <a href="#" class="btn btn-sm">Next &#8250;</a>
+    <a href="#" class="btn btn-sm">End &#187;</a>
+  </div>
+{% endif %}
+</div>
+{% endblock %}

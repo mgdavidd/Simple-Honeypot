@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>phpMyAdmin</title>
+<style>
+*, *:before, *:after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; padding: 0; }
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  background: #eee url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23ddd'/%3E%3C/svg%3E");
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+#pma_navigation_header { display: none; }
+.container {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.15);
+  width: 400px;
+  overflow: hidden;
+}
+.pma-header {
+  background: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pma-logo-text {
+  font-size: 22px;
+  font-weight: bold;
+  color: #6c6c6c;
+  letter-spacing: -1px;
+}
+.pma-logo-text span { color: #f89101; }
+.pma-version { font-size: 11px; color: #999; margin-top: 2px; }
+.pma-body { padding: 24px 20px; }
+.pma-body .form-group { margin-bottom: 16px; }
+.pma-body label {
+  display: block;
+  font-size: 12px;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.pma-body input[type="text"],
+.pma-body input[type="password"] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #bbb;
+  border-radius: 2px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+  outline: none;
+}
+.pma-body input[type="text"]:focus,
+.pma-body input[type="password"]:focus {
+  border-color: #88a;
+  box-shadow: 0 0 3px rgba(100,100,180,0.2);
+}
+.pma-body .server-choice { margin-bottom: 16px; }
+.pma-body select {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #bbb;
+  border-radius: 2px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  color: #333;
+}
+.error-box {
+  background: #ffe8e8;
+  border: 1px solid #d00;
+  border-radius: 2px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #900;
+}
+.pma-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.pma-submit input[type="submit"] {
+  background: linear-gradient(to bottom, #f5f5f5, #e8e8e8);
+  border: 1px solid #bbb;
+  border-radius: 2px;
+  color: #333;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 18px;
+}
+.pma-submit input[type="submit"]:hover {
+  background: linear-gradient(to bottom, #eee, #ddd);
+  border-color: #aaa;
+}
+.pma-footer {
+  background: #f9f9f9;
+  border-top: 1px solid #e0e0e0;
+  padding: 8px 20px;
+  font-size: 11px;
+  color: #999;
+  display: flex;
+  justify-content: space-between;
+}
+.pma-footer a { color: #888; text-decoration: none; }
+.pma-footer a:hover { text-decoration: underline; }
+.token-field { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="pma-header">
+    <div>
+      <div class="pma-logo-text">php<span>MyAdmin</span></div>
+      <div class="pma-version">5.2.1 / MySQL 8.0.35</div>
+    </div>
+  </div>
+
+  <div class="pma-body">
+    {% if error %}
+    <div class="error-box">#1045 - {{ error }}</div>
+    {% endif %}
+
+    {% if request.args.get('old_usr') is not none and not error %}
+    <div style="background:#e8ffe8; border:1px solid #0a0; border-radius:2px; padding:8px 12px; margin-bottom:16px; font-size:13px; color:#060;">
+      You have been logged out successfully.
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/phpmyadmin/index.php" name="login_form" id="login_form">
+      <input type="hidden" name="set_session" value="">
+      <input type="hidden" name="token" value="{{ token }}">
+      <input type="hidden" name="target" value="index.php">
+      <input type="hidden" name="server" value="1">
+
+      <div class="server-choice">
+        <label>Server Choice</label>
+        <select name="server">
+          <option value="1" selected>1 — localhost (MySQL 8.0.35)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="input_username">Username:</label>
+        <input type="text" name="pma_username" id="input_username"
+               autocomplete="username" autocapitalize="none"
+               autofocus tabindex="1">
+      </div>
+
+      <div class="form-group">
+        <label for="input_password">Password:</label>
+        <input type="password" name="pma_password" id="input_password"
+               autocomplete="current-password" tabindex="2">
+      </div>
+
+      <div class="pma-submit">
+        <label style="font-size:12px; color:#666; font-weight:normal;">
+          <input type="checkbox" name="remember_me" value="1" tabindex="3">
+          Remember me
+        </label>
+        <input type="submit" value="Log in" name="submit" tabindex="4">
+      </div>
+    </form>
+  </div>
+
+  <div class="pma-footer">
+    <span><a href="https://www.phpmyadmin.net/" target="_blank">phpMyAdmin</a> 5.2.1</span>
+    <span>Cookie based authentication mode</span>
+  </div>
+</div>
+</body>
+</html>

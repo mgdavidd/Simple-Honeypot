@@ -1,0 +1,77 @@
+{% extends "wp_admin_base.html" %}
+{% set active_menu = 'users' %}
+{% block title %}Add New User{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <h1>Add New User</h1>
+
+  {% if error %}<div class="notice notice-error"><p>{{ error }}</p></div>{% endif %}
+  {% if message %}<div class="notice notice-success"><p>{{ message }}</p></div>{% endif %}
+
+  <p>Create a brand new user and add them to this site.</p>
+
+  <form method="POST" action="/wp-admin/user-new.php" novalidate="novalidate">
+    <input type="hidden" name="_wpnonce_create-user" value="abc123">
+    <input type="hidden" name="action" value="createuser">
+
+    <table class="form-table">
+      <tr>
+        <th><label for="user_login">Username <span style="color:#d63638;">*</span></label></th>
+        <td>
+          <input type="text" name="user_login" id="user_login" class="regular-text" required autocapitalize="none" autocomplete="off">
+          <p class="description">Usernames cannot be changed once set.</p>
+        </td>
+      </tr>
+      <tr>
+        <th><label for="email">Email <span style="color:#d63638;">*</span></label></th>
+        <td><input type="email" name="email" id="email" class="regular-text" required></td>
+      </tr>
+      <tr>
+        <th><label for="first_name">First Name</label></th>
+        <td><input type="text" name="first_name" id="first_name" class="regular-text"></td>
+      </tr>
+      <tr>
+        <th><label for="last_name">Last Name</label></th>
+        <td><input type="text" name="last_name" id="last_name" class="regular-text"></td>
+      </tr>
+      <tr>
+        <th><label for="url">Website</label></th>
+        <td><input type="url" name="url" id="url" class="regular-text"></td>
+      </tr>
+      <tr>
+        <th><label for="pass1">Password</label></th>
+        <td>
+          <input type="password" name="pass1" id="pass1" class="regular-text" autocomplete="new-password">
+          <p class="description" id="pass-strength-result" style="font-size:13px; padding:4px 0;">Strength indicator</p>
+        </td>
+      </tr>
+      <tr>
+        <th></th>
+        <td>
+          <label>
+            <input type="checkbox" name="send_user_notification" value="1" checked>
+            Send the new user an email about their account.
+          </label>
+        </td>
+      </tr>
+      <tr>
+        <th><label for="role">Role</label></th>
+        <td>
+          <select name="role" id="role">
+            <option value="subscriber" selected>Subscriber</option>
+            <option value="contributor">Contributor</option>
+            <option value="author">Author</option>
+            <option value="editor">Editor</option>
+            <option value="administrator">Administrator</option>
+          </select>
+        </td>
+      </tr>
+    </table>
+
+    <p class="submit">
+      <input type="submit" name="createuser" id="createuser" class="button button-primary" value="Add New User">
+    </p>
+  </form>
+</div>
+{% endblock %}

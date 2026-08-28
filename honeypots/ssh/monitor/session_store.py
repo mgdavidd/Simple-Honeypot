@@ -1,9 +1,9 @@
 import threading
-from datetime import datetime
 import pwd
 import os
 
 from common.log_client import send_log
+from common.time_utils import colombia_now
 
 _FINALIZE_GRACE_ACCEPTED  = float(os.getenv("HONEYPOT_GRACE_ACCEPTED",  "1.5"))
 _FINALIZE_GRACE_REJECTED  = float(os.getenv("HONEYPOT_GRACE_REJECTED",  "0.5"))
@@ -44,7 +44,7 @@ class SessionStore:
             self._sessions[key] = {
                 "ip": ip,
                 "port": port,
-                "connection_time": datetime.now().isoformat(),
+                "connection_time": colombia_now().isoformat(),
                 "username": None,
                 "credentials_tried": [],
                 "auth_attempts": 0,

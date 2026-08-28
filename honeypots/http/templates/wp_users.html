@@ -1,0 +1,59 @@
+{% extends "wp_admin_base.html" %}
+{% set active_menu = 'users' %}
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <h1>
+    Users
+    <a href="/wp-admin/user-new.php" class="page-title-action">Add New User</a>
+  </h1>
+
+  {% if request.args.get('deleted') %}
+  <div class="notice notice-success"><p>User deleted.</p></div>
+  {% endif %}
+  {% if request.args.get('update') == 'add' %}
+  <div class="notice notice-success"><p>New user created. <a href="/wp-admin/users.php">View users</a></p></div>
+  {% endif %}
+
+  <table class="wp-list-table widefat fixed striped users">
+    <thead>
+      <tr>
+        <th style="width:28px;"><input type="checkbox"></th>
+        <th>Username</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Posts</th>
+        <th>Registered</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td><input type="checkbox" value="{{ user.id }}"></td>
+        <td>
+          <strong><a href="/wp-admin/user-edit.php?user_id={{ user.id }}">{{ user.username }}</a></strong>
+          {% if user.username == username %}<span style="color:#646970;"> — <em>It's you!</em></span>{% endif %}
+          <div class="row-actions">
+            <span><a href="/wp-admin/user-edit.php?user_id={{ user.id }}">Edit</a></span>
+            {% if user.username != username %}
+            | <span><a href="/wp-admin/users.php?action=delete&user={{ user.id }}"
+                 class="button-link-delete"
+                 onclick="return confirm('Are you sure you want to delete this user?')">Delete</a></span>
+            {% endif %}
+          </div>
+        </td>
+        <td>{{ user.name }}</td>
+        <td><a href="mailto:{{ user.email }}">{{ user.email }}</a></td>
+        <td>{{ user.role }}</td>
+        <td><a href="/wp-admin/edit.php?author={{ user.id }}">{{ user.posts }}</a></td>
+        <td>{{ user.registered }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center; padding:20px; color:#646970;">No users found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

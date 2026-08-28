@@ -23,6 +23,9 @@ try:
 except json.JSONDecodeError:
     VALID_CREDENTIALS = {}
 
+# ── Ruta de datos persistentes (volumen Docker) ───────────────────────────────
+DATA_DIR = os.getenv("DATA_DIR", "/data")
+
 # ── Guardias ──────────────────────────────────────────────────────────────────
 blocker = IPBlocker()
 
@@ -37,10 +40,10 @@ if ENABLE_RATE_LIMIT:
     rate_limit_guard.WINDOW_SECONDS    = RATE_LIMIT_WINDOW
     rate_limit_guard.BAN_SECONDS       = BAN_SECONDS
 
-# ── Diagnóstico al arranque ───────────────────────────────────────────────────
 def print_startup_info() -> None:
     print(f"[http] {SERVICE_ID} iniciado")
     print(f"  Template: {TEMPLATE}")
+    print(f"  Data dir: {DATA_DIR}")
     print(f"  Rate Limit: {'ENABLED' if ENABLE_RATE_LIMIT else 'DISABLED'}")
     if ENABLE_RATE_LIMIT:
         print(f"    - Threshold: {RATE_LIMIT_THRESHOLD} GETs en {RATE_LIMIT_WINDOW}s")

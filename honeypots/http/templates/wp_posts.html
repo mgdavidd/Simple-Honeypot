@@ -1,0 +1,77 @@
+{% extends "wp_admin_base.html" %}
+{% set active_menu = 'posts' %}
+{% block title %}Posts{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <h1>
+    Posts
+    <a href="/wp-admin/post-new.php" class="page-title-action">Add New Post</a>
+  </h1>
+
+  {% if request.args.get('deleted') %}
+  <div class="notice notice-success"><p>Post moved to the Trash.</p></div>
+  {% endif %}
+  {% if request.args.get('message') == '1' %}
+  <div class="notice notice-success"><p>Post updated. <a href="#">View post</a></p></div>
+  {% endif %}
+
+  <ul class="subsubsub">
+    <li><a href="/wp-admin/edit.php" class="current">All <span class="count">({{ posts|length }})</span></a></li>
+    <li><a href="/wp-admin/edit.php?post_status=publish">Published <span class="count">({{ posts|selectattr('status','eq','publish')|list|length }})</span></a></li>
+    <li><a href="/wp-admin/edit.php?post_status=draft">Drafts <span class="count">({{ posts|selectattr('status','eq','draft')|list|length }})</span></a></li>
+  </ul>
+
+  <div class="tablenav top">
+    <div class="tablenav-pages">
+      <span class="displaying-num">{{ posts|length }} items</span>
+    </div>
+  </div>
+
+  <table class="wp-list-table widefat fixed striped table-view-list posts">
+    <thead>
+      <tr>
+        <th style="width:28px;"><input type="checkbox"></th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Categories</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for post in posts %}
+      <tr>
+        <td><input type="checkbox" value="{{ post.id }}"></td>
+        <td class="column-title">
+          <strong><a href="/wp-admin/post.php?post={{ post.id }}&action=edit">{{ post.title }}</a></strong>
+          {% if post.status == 'draft' %}<span style="color:#646970; font-size:12px;"> — Draft</span>{% endif %}
+          <div class="row-actions">
+            <span class="edit"><a href="/wp-admin/post.php?post={{ post.id }}&action=edit">Edit</a> | </span>
+            <span class="trash"><a href="/wp-admin/post.php?post={{ post.id }}&action=delete"
+              onclick="return confirm('Are you sure you want to delete this post?')">Trash</a> | </span>
+            <span class="view"><a href="/?p={{ post.id }}">View</a></span>
+          </div>
+        </td>
+        <td>{{ post.author }}</td>
+        <td>{{ post.categories | join(', ') }}</td>
+        <td>
+          {% if post.status == 'publish' %}
+          Published<br><span style="color:#646970;">{{ post.date[:10] }}</span>
+          {% else %}
+          Last Modified<br><span style="color:#646970;">{{ post.date[:10] }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center; padding:20px; color:#646970;">No posts found.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th><input type="checkbox"></th>
+        <th>Title</th><th>Author</th><th>Categories</th><th>Date</th>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}
