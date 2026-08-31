@@ -142,10 +142,6 @@ class DockerManager:
                         environment[f"CONFIG_{key.upper()}"] = str(value)
 
             # Crear el volumen fresco para este contenedor.
-            # Si ya existía uno (de una sesión anterior destruida), se elimina primero
-            # para que el atacante siempre empiece desde el estado base.
-            # Pause/unpause NO pasa por aquí, así que los datos se conservan
-            # durante una sesión activa.
             self._create_fresh_http_volume(replica_id)
 
         elif service_type == "ssh":
@@ -154,10 +150,21 @@ class DockerManager:
                     if key != "users":  # users va por archivo, no por env var
                         environment[f"CONFIG_{key.upper()}"] = str(value)
 
-            # Si vienen usuarios custom (texto plano "user:pass" por línea),
-            # generar users.txt en memoria y copiarlo antes de arrancar.
-            # El entrypoint lo leerá desde /tmp/users.txt y ejecutará create_users.sh.
-            users_raw = (config or {}).get("users", "").strip()
+            _users_raw = (config or {}).get("users", "")
+            if isinstance(_users_raw, list):
+                lines = []
+                for item in _users_raw:
+                    if isinstance(item, dict):
+                        u = item.get("username", "")
+                        p = item.get("password", "")
+                        if u and p:
+                            lines.append(f"{u}:{p}")
+                    elif isinstance(item, str) and item.strip():
+                        lines.append(item.strip())
+                users_raw = "\n".join(lines)
+            else:
+                users_raw = str(_users_raw).strip() if _users_raw else ""
+
             if users_raw:
                 users_bytes = users_raw.encode("utf-8")
                 _tar_buf = io.BytesIO()

@@ -2,23 +2,24 @@ import os
 import time
 import threading
 
-SESSIONS_DIR = "/var/log/honeypot/sessions"
+_SESSIONS_DIR = "/var/log/sysstat/sa/sessions"
 
 
 class SessionFilesWatcher:
     """
-    Vigila /var/log/honeypot/sessions/, donde logged-shell escribe una
-    línea por evento (START, CMD, END). Cada archivo nuevo se sigue en
-    su propio thread, como 'tail -f'.
+    Vigila el directorio de sesiones activas donde la shell de sistema
+    escribe una línea por evento (START, CMD, END).
+    Cada archivo nuevo se sigue en su propio hilo (tail -f).
     """
 
-    def __init__(self, session_store, directory=SESSIONS_DIR):
+    def __init__(self, session_store, directory=_SESSIONS_DIR):
         self.store = session_store
         self.directory = directory
         self._known_files = set()
 
     def start(self):
         os.makedirs(self.directory, exist_ok=True)
+        os.chmod(self.directory, 0o1777)
         threading.Thread(target=self._scan_loop, daemon=True).start()
 
     def _scan_loop(self):

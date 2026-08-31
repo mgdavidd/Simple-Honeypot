@@ -1,19 +1,35 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-USERS_FILE="/tmp/users.txt"
-SHELL_PATH="/usr/local/bin/logged-shell"
+USERS_FILE="${USERS_FILE:-/tmp/users.txt}"
+SHELL_PATH="${SHELL_PATH:-/usr/local/bin/sysinfo}"
 
-while IFS=: read -r username password; do
-    [ -z "$username" ] && continue
+if [ ! -f "$USERS_FILE" ]; then
+    exit 0
+fi
+
+while IFS=: read -r username password || [ -n "${username:-}" ]; do
+    username="${username%$'\r'}"
+    password="${password:-}"
+    password="${password%$'\r'}"
+
+    [ -z "${username:-}" ] && continue
+
+    if id -u "$username" >/dev/null 2>&1; then
+        :
+    else
+        if [ "$username" = "root" ]; then
+            usermod -s "$SHELL_PATH" root
+        else
+            useradd -m -s "$SHELL_PATH" "$username"
+        fi
+    fi
 
     if [ "$username" = "root" ]; then
         echo "root:$password" | chpasswd
         usermod -s "$SHELL_PATH" root
     else
-        useradd -m -s "$SHELL_PATH" "$username"
         echo "$username:$password" | chpasswd
     fi
 
-    echo "[+] Usuario creado: $username (shell: $SHELL_PATH)"
 done < "$USERS_FILE"

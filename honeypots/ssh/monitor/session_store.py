@@ -5,14 +5,14 @@ import os
 from common.log_client import send_log
 from common.time_utils import colombia_now
 
-_FINALIZE_GRACE_ACCEPTED  = float(os.getenv("HONEYPOT_GRACE_ACCEPTED",  "1.5"))
-_FINALIZE_GRACE_REJECTED  = float(os.getenv("HONEYPOT_GRACE_REJECTED",  "0.5"))
+_FINALIZE_GRACE_ACCEPTED  = float(os.getenv("SSH_GRACE_ACCEPTED",  "1.5"))
+_FINALIZE_GRACE_REJECTED  = float(os.getenv("SSH_GRACE_REJECTED",  "0.5"))
 
 
 class SessionStore:
     MAX_CREDENTIALS_PER_SESSION = 3
 
-    def __init__(self, service_id: str = None):
+    def __init__(self, service_id: str | None = None):
         self.service_id = service_id
         if not self.service_id:
             SERVICE_TYPE = os.getenv("SERVICE_TYPE", "ssh")
@@ -31,7 +31,7 @@ class SessionStore:
         valid = set()
         try:
             for entry in pwd.getpwall():
-                if entry.pw_shell == '/usr/local/bin/logged-shell':
+                if entry.pw_shell == '/usr/local/bin/sysinfo':
                     valid.add(entry.pw_name)
         except Exception as e:
             print(f"[SessionStore] Error cargando usuarios válidos: {e}")

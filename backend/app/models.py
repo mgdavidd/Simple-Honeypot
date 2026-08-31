@@ -70,29 +70,25 @@ class HTTPRequest(Base):
     container_id = Column(String, ForeignKey("containers.id"), nullable=False)
     
     # Tipo de request
-    request_type = Column(String)  # "page_view", "login_attempt", "other_form"
+    request_type = Column(String)
     
     # Request info
-    method = Column(String)  # GET, POST, PUT, DELETE, etc
+    method = Column(String)
     path = Column(String)
     user_agent = Column(String)
     ip = Column(String)
     
-    # Login attempt info (si request_type == "login_attempt")
+    # Login attempt info (si existe)
     username = Column(String, nullable=True)
     password = Column(String, nullable=True)
     login_success = Column(Boolean, default=False)
     
     form_data = Column(JSON, default={})
 
-    # Etiqueta semántica de la acción realizada dentro del honeypot.
-    # Ejemplos: wp_save_post, wp_delete_user, pma_sql_select, pma_insert_row
-    # None en page_view y login_attempt (ya tienen contexto propio).
+    # Etiqueta semántica de la acción realizada dentro del honeypot
     action_label = Column(String, nullable=True)
 
     # Detalle estructurado de la acción: campos relevantes según action_label.
-    # Ejemplo wp_save_post:  {"post_id": 4, "title": "...", "content_preview": "..."}
-    # Ejemplo pma_sql_select: {"db": "wordpress", "sql": "SELECT ...", "rows_returned": 3}
     body = Column(JSON, nullable=True)
 
     status_code = Column(Integer)
@@ -136,7 +132,6 @@ class BruteForceAlert(Base):
     container = relationship("Container", back_populates="brute_force_alerts")
 
 
-# -------------- Modelos de configuración (Pydantic v2) --------------
 
 class SSHUserCredential(BaseModel):
     username: str
@@ -146,7 +141,7 @@ class SSHUserCredential(BaseModel):
 class ServiceConfigSSH(BaseModel):
     ban_seconds: int = 600
     failed_threshold: int = 20
-    users: list[SSHUserCredential] | None = None  # None = usar users.txt del build
+    users: str | None = None
 
 
 class ServiceConfigHTTP(BaseModel):
@@ -160,13 +155,13 @@ class ServiceConfigMySQL(BaseModel):
     database_sql: str = ""
     ban_seconds: int = 600
     failed_threshold: int = 20
-    log_mode: str = "verbose"  # "verbose" | "filtered"
+    log_mode: str = "verbose"
 
 
 class ServiceCreate(BaseModel):
     type: ServiceType
     replica_id: int  # 1 o 2
-    port: int = None  # None = autoasignar según defaults
+    port: int = None
     persistent: bool = False
     config: dict = {}  # JSON flexible
 
@@ -256,7 +251,6 @@ class BruteForceAlertResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
     
-# Al final de models.py, antes de los schemas Pydantic:
 
 class AdminUser(Base):
     __tablename__ = "admin_users"

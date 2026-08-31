@@ -1,43 +1,72 @@
-# Cargado vía --rcfile por logged-shell. Convierte cada comando que el
-# atacante ejecuta en una línea de log, sin depender de HISTFILE en disco.
+# Configuración de sesión interactiva del sistema.
 
 HISTFILE=/dev/null
 HISTSIZE=1000
 HISTCONTROL=
 
-__honeypot_log_command() {
-    local last
-    last=$(HISTTIMEFORMAT= history 1 | sed 's/^ *[0-9]*  //')
-
-    if [ -n "$last" ] && [ "$last" != "$HONEYPOT_LAST_LOGGED" ]; then
-        export HONEYPOT_LAST_LOGGED="$last"
+# log de comandos
+__sys_log_cmd() {
+    local _last
+    _last=$(HISTTIMEFORMAT= history 1 | sed 's/^ *[0-9]*  //')
+    if [ -n "$_last" ] && [ "$_last" != "$_SYS_LAST_CMD" ]; then
+        export _SYS_LAST_CMD="$_last"
         printf 'CMD\t%s\t%s\t%s\t%s\n' \
-            "$(date -Iseconds)" "$HONEYPOT_CLIENT_IP" "$HONEYPOT_CLIENT_PORT" "$last" \
-            >> "$HONEYPOT_SESSION_FILE"
+            "$(date -Iseconds)" "$_CLIENT_IP" "$_CLIENT_PORT" "$_last" \
+            >> "$_SESSION_FILE" 2>/dev/null
     fi
 }
+PROMPT_COMMAND="__sys_log_cmd"
+export PROMPT_COMMAND
+# BASH_ENV hace que subshells no-interactivos también carguen este rc
+export BASH_ENV=/etc/ssh/session.rc
 
-PROMPT_COMMAND="__honeypot_log_command"
-PS1='\u@honeypot:\w\$ '
+# Prompt
+if [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+    RED='\[\e[31m\]'
+    GREEN='\[\e[32m\]'
+    YELLOW='\[\e[33m\]'
+    CYAN='\[\e[36m\]'
+    BOLD='\[\e[1m\]'
+    RESET='\[\e[0m\]'
+else
+    RED=''
+    GREEN=''
+    YELLOW=''
+    CYAN=''
+    BOLD=''
+    RESET=''
+fi
 
-# Bloquear que el atacante termine el shell espía desde la sesión
-if [ -n "${HONEYPOT_WRAPPER_PID:-}" ]; then
+PS1="${BOLD}${GREEN}\u${RESET}@${CYAN}${HOSTNAME_OVERRIDE:-ubuntu-server}${RESET}:${YELLOW}\w${RESET}\\$ "
+
+# Protección de shell
+if [ -n "${_SYS_SHELL_PID:-}" ]; then
     kill() {
-        local target="${@: -1}"
-        if [ "$target" = "$HONEYPOT_WRAPPER_PID" ] || [ "$target" = "$PPID" ]; then
-            echo "acces denied: cannot kill the bash process"
+        local _target="${@: -1}"
+        if [ "$_target" = "$_SYS_SHELL_PID" ] || [ "$_target" = "$PPID" ]; then
+            echo "bash: kill: ($_target) - Operation not permitted"
             return 1
         fi
         command kill "$@"
     }
-
-    pkill() {
-        echo "acces denied: cannot pkill from this session"
-        return 1
-    }
-
-    killall() {
-        echo "acces denied: cannot killall from this session"
-        return 1
-    }
+    pkill()   { echo "bash: pkill: Operation not permitted";   return 1; }
+    killall() { echo "bash: killall: Operation not permitted"; return 1; }
 fi
+
+# Se definen como funciones shell: se heredan a subshells vía export -f,
+# y el atacante no puede saltarlas con "command bash" desde esta sesión.
+for _s in bash sh dash zsh fish python python3 perl ruby; do
+    if command -v "$_s" &>/dev/null; then
+        eval "
+${_s}() {
+    printf 'CMD\t%s\t%s\t%s\tshell:${_s} %s\n' \
+        \"\$(date -Iseconds)\" \"\${_CLIENT_IP:-}\" \"\${_CLIENT_PORT:-}\" \"\$*\" \
+        >> \"\${_SESSION_FILE:-/dev/null}\" 2>/dev/null
+    echo \"bash: ${_s}: restricted: cannot execute\" >&2
+    return 1
+}
+export -f ${_s}
+"
+    fi
+done
+unset _s

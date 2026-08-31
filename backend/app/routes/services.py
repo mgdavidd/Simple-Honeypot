@@ -299,7 +299,9 @@ def reconfigure_service(
 
         new_port = body.get("port") or container.port
         new_persistent = body.get("persistent") if "persistent" in body else container.persistent
-        new_config = body.get("config") or container.config
+        # Usar None-check explícito: "or" descartaría configs válidos cuyo
+        # primer valor truthy falle (ej. users="" vacío al limpiar la lista).
+        new_config = body["config"] if "config" in body else container.config
 
         if container.type == "ssh" and new_config.get("users"):
             errs = _validate_ssh_users(new_config["users"])

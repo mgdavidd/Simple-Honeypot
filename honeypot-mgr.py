@@ -19,7 +19,6 @@ IMAGES = {
         "dockerfile": "honeypots/http/Dockerfile",
         "tag": "honeypot-http:v1",
     },
-    # MySQL (comentado para futura personalización)
     "mysql": {
         "context": "honeypots",
         "dockerfile": "honeypots/mysql/Dockerfile",
